@@ -1,0 +1,903 @@
+/* Kick Extension - Base Styles */
+
+/* Example: Add a subtle indicator that the extension is active */
+/* 
+body::after {
+    content: 'Extension Active';
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #00e699;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 9999;
+    pointer-events: none;
+} 
+*/
+
+/* Future CSS overrides for Kick.com chat will go here */
+
+/**
+ * Layout: Move chat to left
+ * Targets the main flex container and reverses its direction.
+ * This swaps the <main> content and the chat wrapper div.
+ */
+body.ext-chat-left .flex.bg-surface-lowest.lg\:flex-1.lg\:overflow-hidden {
+    flex-direction: row-reverse !important;
+}
+
+/* Adjust borders for the left-side chat */
+body.ext-chat-left #channel-chatroom {
+    border-right: 2px solid #24272c !important;
+    border-left: none !important;
+}
+
+/**
+ * Friends Highlight
+ * Applies a dashed gray border to friend messages, but reverts to native solid green for mentions.
+ */
+.kick-ext-friend-msg {
+    border: 1px dashed rgba(255, 255, 255, 0.4) !important;
+    border-radius: 8px !important;
+}
+
+.kick-ext-friend-msg.border-green-500,
+.kick-ext-friend-msg[class*="border-green-"] {
+    border-style: solid !important;
+    border-color: rgb(83, 252, 24) !important;
+    border-width: 1px !important;
+}
+
+:root {
+    --kick-ext-bg-alpha: 1; /* Default to solid */
+    --kick-ext-panel-alpha: 1;
+    --kick-ext-blur: 6px; /* Blur level: 0px (off), 2px (light), 6px (full) */
+}
+
+/**
+ * Fullscreen Chat Overlay
+ */
+#kick-ext-chat-overlay {
+    position: fixed !important;
+    top: 50px;
+    right: 20px;
+    width: 340px;
+    height: 65vh; /* Shorter height so it can be moved up/down */
+    min-height: 75px !important;
+    z-index: 9999999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    pointer-events: auto !important;
+    background-color: rgba(10, 10, 10, var(--kick-ext-bg-alpha)) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    transition: background 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Drag Handle */
+#kick-ext-chat-handle {
+    height: 12px !important;
+    background: rgba(40, 40, 40, 0.9) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    user-select: none !important;
+    flex-shrink: 0 !important;
+
+}
+
+#kick-ext-chat-handle:hover {
+    background: rgba(83, 252, 24, 0.4) !important; /* Kick Green on hover */
+}
+
+.handle-icon {
+    width: 30px !important;
+    height: 4px !important;
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-radius: 2px !important;
+}
+
+#kick-ext-chat-handle:hover .handle-icon {
+    background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Dragging state */
+.is-dragging {
+    opacity: 0.8 !important;
+    cursor: grabbing !important;
+}
+
+/* Resize Handle - Bottom Edge (Height only) */
+#kick-ext-chat-resize-handle {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 20px !important; /* Offset to not overlap corner */
+    right: 0 !important;
+    height: 8px !important;
+    background: rgba(40, 40, 40, 0.5) !important;
+    cursor: ns-resize !important;
+    z-index: 10000000 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+#kick-ext-chat-resize-handle::after {
+    content: '' !important;
+    width: 30px !important;
+    height: 2px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 2px !important;
+}
+
+#kick-ext-chat-resize-handle:hover::after {
+    background: #53fc18 !important; /* Kick Green */
+}
+
+/* Resize Handle - Bottom Left Corner (Width + Height) */
+#kick-ext-chat-corner-handle {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    cursor: nesw-resize !important;
+    z-index: 10000001 !important;
+    background: transparent !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+#kick-ext-chat-corner-handle::after {
+    content: '' !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-left: 2px solid rgba(255, 255, 255, 0.4) !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.4) !important;
+    transition: border-color 0.2s ease !important;
+}
+
+#kick-ext-chat-corner-handle:hover::after {
+    border-left-color: #53fc18 !important; /* Kick Green */
+    border-bottom-color: #53fc18 !important; /* Kick Green */
+}
+
+.is-resizing {
+    border-left: 2px solid #53fc18 !important;
+    border-bottom: 2px solid #53fc18 !important;
+}
+
+/* Fix chat container to fill the overlay properly without cutting off the bottom */
+#kick-ext-chat-overlay #channel-chatroom {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important; /* Crucial for flex children to shrink */
+    order: unset !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure the scrollable message area takes up the free space */
+#kick-ext-chat-overlay .chatroom-main-container,
+#kick-ext-chat-overlay [id^="chat-container"] {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+}
+
+/* Ensure input area doesn't shrink */
+#kick-ext-chat-overlay .chat-input-container,
+#kick-ext-chat-overlay .relative.flex.w-full.flex-col.p-4 {
+    flex-shrink: 0 !important;
+}
+
+/* Override Kick's internal background colors when in the overlay */
+#kick-ext-chat-overlay #channel-chatroom,
+#kick-ext-chat-overlay .bg-surface-lowest,
+#kick-ext-chat-overlay .bg-black,
+#kick-ext-chat-overlay .bg-surface-low,
+#kick-ext-chat-overlay .bg-surface-lower,
+#kick-ext-chat-overlay .bg-surface-main,
+#kick-ext-chat-overlay .bg-surface-highest,
+#kick-ext-chat-overlay .bg-surface-base,
+#kick-ext-chat-overlay [id^="chat-container"],
+#kick-ext-chat-overlay .chatroom-main-container {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Ensure text and icons remain fully opaque */
+#kick-ext-chat-overlay span,
+#kick-ext-chat-overlay div:not([class*="bg-"]),
+#kick-ext-chat-overlay button,
+#kick-ext-chat-overlay input {
+    opacity: 1 !important;
+}
+
+/* Force input area to also be transparent but keep its border/layout */
+#kick-ext-chat-overlay .relative.flex.w-full.flex-col.p-4 {
+    background-color: transparent !important;
+}
+
+/* ==========================================================================
+   Floating Panels & Menus (Emotes, Settings, Mentions, etc.)
+   Standardized glass effect for all elements appearing ABOVE the chat list.
+   ========================================================================== */
+#kick-ext-chat-overlay [data-testid="pinned-message-modal"] .bg-surface-highest,
+#kick-ext-chat-overlay #chat-emotes-picker-panel .bg-surface-base,
+#kick-ext-chat-overlay #chat-settings-panel .bg-surface-base,
+#kick-ext-chat-overlay #chat-mention-panel .bg-surface-base,
+#kick-ext-chat-overlay #gift-shop-panel .bg-surface-base,
+#kick-ext-chat-overlay #rewards-panel .bg-surface-base,
+#kick-ext-chat-overlay #channel-chatroom button.bg-surface-base,
+#kick-ext-chat-overlay .seventv-emote-menu,
+#kick-ext-chat-overlay .seventv-autocomplete-list,
+#kick-ext-chat-overlay .kick-ext-7tv-autocomplete,
+body.ext-fullscreen-active .floating-container .seventv-emote-menu,
+body.ext-fullscreen-active .floating-container .seventv-autocomplete-list,
+body.ext-fullscreen-active .floating-container .kick-ext-7tv-autocomplete {
+    /* Uses dynamic alpha calculated in transparency.js */
+    background-color: rgba(10, 10, 10, var(--kick-ext-panel-alpha)) !important;
+    background-image: none !important;
+
+    backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--kick-ext-blur)) !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Glass effect for 7TV elements inside overlay */
+#kick-ext-chat-overlay .seventv-emote-menu,
+#kick-ext-chat-overlay .seventv-autocomplete-list,
+#kick-ext-chat-overlay .kick-ext-7tv-autocomplete {
+    background-color: rgba(10, 10, 10, var(--kick-ext-panel-alpha)) !important;
+    backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 8px !important;
+}
+
+#kick-ext-chat-overlay .seventv-autocomplete-item {
+    padding: 4px 8px !important;
+    cursor: pointer !important;
+}
+
+#kick-ext-chat-overlay .seventv-autocomplete-item[selected="true"] {
+    background: rgba(83, 252, 24, 0.15) !important;
+}
+
+/* Position autocomplete above the input box inside overlay */
+#kick-ext-chat-overlay > .seventv-autocomplete-list,
+#kick-ext-chat-overlay > .kick-ext-7tv-autocomplete,
+#kick-ext-chat-overlay > .floating-container {
+    position: absolute !important;
+    bottom: 80px !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-height: 50vh !important;
+    z-index: 10000001 !important;
+}
+
+#kick-ext-chat-overlay .floating-container .seventv-autocomplete-list,
+#kick-ext-chat-overlay .floating-container .seventv-emote-menu {
+    width: 100% !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+}
+
+/* Position emote menu above the input box inside overlay */
+#kick-ext-chat-overlay > .seventv-emote-menu {
+    position: absolute !important;
+    bottom: 80px !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: auto !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    z-index: 10000001 !important;
+}
+
+body.ext-fullscreen-active .floating-container {
+    z-index: 100000000 !important;
+    pointer-events: auto !important;
+}
+
+/* #seventv-root inside fullscreen - ensure menus always render above chat overlay */
+:fullscreen #seventv-root,
+:-webkit-full-screen #seventv-root {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: visible !important;
+    z-index: 100000000 !important;
+    pointer-events: none !important;
+}
+
+:fullscreen #seventv-root .floating-container,
+:-webkit-full-screen #seventv-root .floating-container {
+    pointer-events: auto !important;
+    z-index: 100000000 !important;
+}
+
+/* ==========================================================================
+   7TV Emote Menu — Compact mode when overlay is short
+   --kick-ext-overlay-h is set on documentElement by JS (resizable.js / fullscreen.js)
+   so it cascades to both #kick-ext-chat-overlay and #seventv-root (siblings).
+   body.kick-ext-emote-compact is toggled by JS when overlay height < 360px.
+
+   Formula: menu height = overlay_height - 105px (input area ~90px + handle 12px + buffer)
+   This ensures the menu NEVER reaches the input toolbar / toggle button regardless of
+   where the overlay is positioned (including near the top of the screen where 7TV
+   would otherwise flip the menu downward and cover the button).
+   ========================================================================== */
+
+/* Always: menu height bounded to leave input area always accessible */
+:fullscreen #seventv-root .floating-container .seventv-emote-menu,
+:-webkit-full-screen #seventv-root .floating-container .seventv-emote-menu {
+    max-height: clamp(60px, calc(var(--kick-ext-overlay-h, 65vh) - 105px), 360px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Compact class kept for JS infrastructure but formula already scales — no separate override */
+
+/* Sticky header: provider tabs + search always pinned to top as emotes scroll underneath */
+:fullscreen #seventv-root .floating-container .seventv-emote-menu-header,
+:-webkit-full-screen #seventv-root .floating-container .seventv-emote-menu-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2 !important;
+    background: rgba(10, 10, 10, 0.97) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+}
+
+:fullscreen #seventv-tooltip-container,
+:-webkit-full-screen #seventv-tooltip-container {
+    z-index: 100000001 !important;
+}
+
+/* ==========================================================================
+   Chat Message Hover - Frosted Glass Effect
+   Targets both normal and reply messages with a unified, performant style.
+   ========================================================================== */
+
+/* 1. Base state - transitions and rounding */
+#kick-ext-chat-overlay #channel-chatroom .group.relative > .w-full.min-w-0.shrink-0.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .group.relative .flex.w-full.min-w-0.shrink-0.flex-col.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .inline-flex.min-w-0.flex-nowrap.items-baseline.rounded.betterhover\:hover\:bg-\[\#474f54\] {
+    /* Kill ALL transitions on exit to prevent ghosting/stickiness */
+    transition: none !important;
+    border-radius: 0.5rem !important;
+}
+
+/* 2. Hover state - instant, GPU-friendly background swap */
+#kick-ext-chat-overlay #channel-chatroom .group.relative:hover > .w-full.min-w-0.shrink-0.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .group.relative:hover .flex.w-full.min-w-0.shrink-0.flex-col.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .group.relative:hover .betterhover\:group-hover\:bg-surface-highest,
+#kick-ext-chat-overlay #channel-chatroom .inline-flex.min-w-0.flex-nowrap.items-baseline.rounded.betterhover\:hover\:bg-\[\#474f54\]:hover {
+    background-color: rgba(30, 30, 30, 0.45) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+/* ==========================================================================
+   Gifted Subs Marquee Indicator Row
+   Darker background with a blur effect and a bottom border to match other panels.
+   ========================================================================== */
+#kick-ext-chat-overlay div:has(> .animate-marquee) {
+    background-color: rgba(10, 10, 10, var(--kick-ext-panel-alpha)) !important;
+    background-image: none !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    will-change: backdrop-filter;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    z-index: 10 !important;
+}
+
+/* Hide Top Gifted / Leaderboard Header */
+body.kick-ext-hide-leaderboard #kick-ext-chat-overlay div:has(> .relative.flex.flex-col.justify-end.text-sm.font-medium),
+body.kick-ext-hide-leaderboard #kick-ext-chat-overlay .relative.flex.flex-col.justify-end.text-sm.font-medium,
+body.kick-ext-hide-leaderboard #kick-ext-chat-overlay button[aria-label="Expand leaderboard"] {
+    display: none !important;
+}
+
+/* Hide Moderation Bar Toggle */
+body.kick-ext-hide-mod-bar #kick-ext-chat-overlay .flex.items-center.justify-evenly.border-b-2 {
+    display: none !important;
+}
+
+/* Hide User Info Header */
+body.kick-ext-hide-user-info #kick-ext-chat-overlay .z-absolute.relative.bg-surface-lowest.\!z-\[102\].overflow-visible.rounded-none.p-2,
+body.kick-ext-hide-user-info #kick-ext-chat-overlay .z-absolute.relative.bg-surface-lowest.p-2:has(button) {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Mo'Kick Extension Compatibility Support
+   ========================================================================== */
+
+/* Elevate the hovered chat entry so that its child menus and tooltips (like Mo'Kick) 
+   render on top of emotes/text from other chat messages */
+#kick-ext-chat-overlay .chat-entry:hover,
+#kick-ext-chat-overlay .chatroom-line:hover {
+    position: relative !important;
+    z-index: 99 !important;
+}
+
+/* Ensure Mo'Kick buttons, menus, and tooltips are fully opaque and not affected by transparency settings */
+#kick-ext-chat-overlay [data-mo-kick-injected="true"],
+#kick-ext-chat-overlay [data-mo-kick-injected="true"] *,
+#kick-ext-chat-overlay [class*="mokick" i],
+#kick-ext-chat-overlay [class*="mokick" i] * {
+    opacity: 1 !important;
+}
+
+/* Ensure Mo'Kick tooltips (dynamic or pseudo-elements) stay on top and maintain correct z-index */
+#kick-ext-chat-overlay [data-mo-kick-injected="true"] button::after,
+#kick-ext-chat-overlay [data-mo-kick-injected="true"] button::before,
+#kick-ext-chat-overlay [class*="mokick" i]::after,
+#kick-ext-chat-overlay [class*="mokick" i]::before {
+    z-index: 100 !important;
+    opacity: 1 !important;
+}
+
+/* ==========================================================================
+   Global 7TV Emote Menu Elevation
+   Ensures 7TV menus render above Kick's input toolbar in all contexts
+   ========================================================================== */
+
+#kick-ext-chat-overlay .seventv-emote-menu,
+#kick-ext-chat-overlay .seventv-emote-menu-container,
+#kick-ext-chat-overlay .seventv-emote-menu-wrapper {
+    z-index: 10000000 !important;
+}
+
+/* Ensure 7TV menu is elevated even when injected into chat container */
+#kick-ext-chat-overlay #channel-chatroom .seventv-emote-menu,
+#kick-ext-chat-overlay .chat-input-container .seventv-emote-menu {
+    z-index: 10000000 !important;
+}
+
+/* Force toolbar to stay below emote menus (only inside overlay) */
+#kick-ext-chat-overlay .flex.items-center.justify-evenly.border-b-2.border-\[\#24272c\],
+#kick-ext-chat-overlay .flex.items-center.justify-evenly.border-b-2 {
+    z-index: 1 !important;
+    position: relative !important;
+}
+
+/* Ensure emote menu renders above toolbar buttons (only inside overlay) */
+#kick-ext-chat-overlay .seventv-emote-menu {
+    z-index: 99999999 !important;
+}
+
+/* ==========================================================================
+   Global Stacking & Z-Index Elevation for Tooltips and Portals
+   ==========================================================================
+   This ensures that all dynamic portals, tooltips, and floating menus (such as
+   Kick's native reply/role tooltips, 7TV tooltips, and Mo'Kick tooltips) are 
+   properly elevated above our chat overlay (which has z-index 9999999) when 
+   rendered dynamically as children of body or the fullscreen element.
+*/
+body.ext-fullscreen-active > [data-radix-portal],
+body.ext-fullscreen-active > [data-radix-popper-content-wrapper],
+body.ext-fullscreen-active > [role="tooltip"],
+body.ext-fullscreen-active > [class*="tooltip" i],
+body.ext-fullscreen-active > [class*="popper" i],
+body.ext-fullscreen-active > [class*="popover" i],
+body.ext-fullscreen-active > [class*="mokick" i],
+body.ext-fullscreen-active > [class*="mo-kick" i],
+body.ext-fullscreen-active > [id*="tooltip" i],
+body.ext-fullscreen-active > [id*="popover" i],
+body.ext-fullscreen-active > .tippy-popper,
+body.ext-fullscreen-active > .tippy-box,
+.ext-fullscreen-active [data-radix-portal],
+.ext-fullscreen-active [data-radix-popper-content-wrapper],
+.ext-fullscreen-active [role="tooltip"],
+.ext-fullscreen-active [class*="tooltip" i],
+.ext-fullscreen-active [class*="popper" i],
+.ext-fullscreen-active [class*="popover" i],
+.ext-fullscreen-active [class*="mokick" i],
+.ext-fullscreen-active [class*="mo-kick" i],
+.ext-fullscreen-active [id*="tooltip" i],
+.ext-fullscreen-active [id*="popover" i],
+.ext-fullscreen-active .tippy-popper,
+.ext-fullscreen-active .tippy-box,
+#kick-ext-chat-overlay ~ [data-radix-portal],
+#kick-ext-chat-overlay ~ [data-radix-popper-content-wrapper],
+#kick-ext-chat-overlay ~ [role="tooltip"],
+#kick-ext-chat-overlay ~ [class*="tooltip" i],
+#kick-ext-chat-overlay ~ [class*="popper" i],
+#kick-ext-chat-overlay ~ [class*="popover" i],
+#kick-ext-chat-overlay ~ [class*="mokick" i],
+#kick-ext-chat-overlay ~ [class*="mo-kick" i],
+#kick-ext-chat-overlay ~ [id*="tooltip" i],
+#kick-ext-chat-overlay ~ [id*="popover" i],
+#kick-ext-chat-overlay ~ .tippy-popper,
+#kick-ext-chat-overlay ~ .tippy-box {
+    z-index: 100000000 !important;
+}
+
+/* ==========================================================================
+   Chat Settings Panel — height fix inside fullscreen overlay
+   Same clamp approach as 7TV emote menu: limits max-height based on
+   --kick-ext-overlay-h so the panel never overflows the overlay bounds
+   (critical when chat is short or positioned near the top of the screen).
+   Formula: overlay_height - 105px (handle 12px + input ~78px + buffer 15px)
+   ========================================================================== */
+
+#kick-ext-chat-overlay #chat-settings-panel,
+#kick-ext-chat-overlay #rewards-panel,
+#kick-ext-chat-overlay #gift-shop-panel,
+#kick-ext-chat-overlay #chat-emotes-picker-panel {
+    bottom: 80px !important;
+}
+
+#kick-ext-chat-overlay #chat-settings-panel .bg-surface-base,
+#kick-ext-chat-overlay #rewards-panel .bg-surface-base,
+#kick-ext-chat-overlay #gift-shop-panel .bg-surface-base,
+#kick-ext-chat-overlay #chat-emotes-picker-panel .bg-surface-base {
+    max-height: clamp(80px, calc(var(--kick-ext-overlay-h, 65vh) - 105px), 476px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* Force the scrollable inner area to actually scroll when clamped */
+#kick-ext-chat-overlay #chat-settings-panel .min-h-0.flex-1.overflow-y-auto,
+#kick-ext-chat-overlay #rewards-panel .overflow-y-auto,
+#kick-ext-chat-overlay #gift-shop-panel .overflow-y-auto,
+#kick-ext-chat-overlay #chat-emotes-picker-panel .overflow-y-auto {
+    overflow-y: auto !important;
+    max-height: none !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+}
+
+/* ==========================================================================
+   Extension Settings Panel — injected into Kick's #chat-settings-panel
+   Designed to match Kick's native dark panel aesthetic.
+   ========================================================================== */
+
+/* Section header label (e.g. "Chat Overlay", "Layout") */
+.kick-ext-sp-section-title {
+  padding: 10px 10px 4px;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255, 255, 255, 0.38) !important;
+  user-select: none;
+}
+
+/* Generic setting row container */
+.kick-ext-sp-item {
+  padding: 4px 10px;
+}
+
+/* Horizontal row (label + control side by side) */
+.kick-ext-sp-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 40px !important;
+  padding: 0 10px !important;
+  border-radius: 4px !important;
+  transition: background 0.15s ease !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: white !important;
+  cursor: default;
+}
+
+.kick-ext-sp-row:hover {
+  background: rgba(42, 45, 50, 0.8) !important;
+}
+
+/* Label row for vertical controls (opacity) */
+.kick-ext-sp-label {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: white !important;
+  margin-bottom: 8px !important;
+}
+
+/* Opacity Slider */
+.kick-ext-sp-slider {
+  width: 100% !important;
+  height: 4px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-radius: 2px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  display: block !important;
+}
+
+.kick-ext-sp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: #53fc18 !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: transform 0.1s ease !important;
+  box-shadow: 0 0 6px rgba(83, 252, 24, 0.5) !important;
+}
+
+.kick-ext-sp-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.25) !important;
+}
+
+/* Chat Position Buttons */
+.kick-ext-sp-btn-group {
+  display: flex !important;
+  gap: 4px !important;
+}
+
+.kick-ext-sp-btn {
+  padding: 3px 14px !important;
+  border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  cursor: pointer !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s !important;
+  line-height: 1 !important;
+}
+
+.kick-ext-sp-btn:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: white !important;
+}
+
+.kick-ext-sp-btn.active {
+  background: #53fc18 !important;
+  color: #000 !important;
+  border-color: transparent !important;
+}
+
+/* Toggle Switch */
+.kick-ext-sp-switch {
+  position: relative !important;
+  display: inline-block !important;
+  width: 38px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+
+.kick-ext-sp-switch input {
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+}
+
+.kick-ext-sp-knob {
+  position: absolute !important;
+  inset: 0 !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 22px !important;
+  transition: background 0.2s !important;
+}
+
+.kick-ext-sp-knob::before {
+  content: '' !important;
+  position: absolute !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: white !important;
+  border-radius: 50% !important;
+  top: 3px !important;
+  left: 3px !important;
+  transition: transform 0.2s !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+}
+
+.kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
+  background: #53fc18 !important;
+}
+
+.kick-ext-sp-switch input:checked + .kick-ext-sp-knob::before {
+  transform: translateX(16px) !important;
+}
+
+/* Reset Button */
+.kick-ext-sp-reset-btn {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s !important;
+  text-align: center !important;
+}
+
+.kick-ext-sp-reset-btn:hover {
+  background: rgba(255, 80, 80, 0.18) !important;
+  color: #ff7070 !important;
+  border-color: rgba(255, 80, 80, 0.3) !important;
+}
+
+/* Back Button in Kick panel header */
+#kick-ext-sp-back {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+  transition: background 0.15s !important;
+  flex-shrink: 0 !important;
+}
+
+#kick-ext-sp-back:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+#kick-ext-sp-back svg {
+  display: block !important;
+}
+
+/* ==========================================================================
+   Ghost Mode — Click-Through Chat Overlay
+   Toggled via the ghost button in the drag handle or Alt+G.
+   Messages become click-through; drag handle + input stay interactive.
+   ========================================================================== */
+
+/* Ghost toggle button in the drag handle */
+#kick-ext-ghost-btn {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 3px 5px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.15s ease, background 0.15s ease !important;
+  line-height: 1 !important;
+}
+
+#kick-ext-ghost-btn:hover {
+  color: rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Active (Ghost Mode ON) — glows Kick green */
+#kick-ext-ghost-btn.active {
+  color: #53fc18 !important;
+  background: rgba(83, 252, 24, 0.12) !important;
+  filter: drop-shadow(0 0 4px rgba(83, 252, 24, 0.5)) !important;
+}
+
+#kick-ext-ghost-btn.active:hover {
+  background: rgba(83, 252, 24, 0.2) !important;
+}
+
+/* Make the handle position:relative so we can absolutely-position the ghost btn */
+#kick-ext-chat-handle {
+  position: relative !important;
+}
+
+/* ---- Ghost Mode ON: overlay dims and chat content is click-through ---- */
+
+/* Reduce overall overlay opacity to hint it's in ghost mode */
+#kick-ext-chat-overlay.kick-ext-ghost-mode {
+  opacity: 0.45 !important;
+  transition: opacity 0.25s ease !important;
+}
+
+/* When the mouse is over the drag handle, un-dim so the user can grab/click */
+#kick-ext-chat-overlay.kick-ext-ghost-mode:hover {
+  opacity: 0.65 !important;
+}
+
+/* The overlay itself passes all pointer events through… */
+#kick-ext-chat-overlay.kick-ext-ghost-mode {
+  pointer-events: none !important;
+}
+
+/* …except the drag handle and the ghost button remain interactive */
+#kick-ext-chat-overlay.kick-ext-ghost-mode #kick-ext-chat-handle,
+#kick-ext-chat-overlay.kick-ext-ghost-mode #kick-ext-ghost-btn {
+  pointer-events: auto !important;
+}
+
+/* Injected Settings Shortcuts Guide */
+.kick-ext-sp-shortcuts {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin: 4px 10px 10px !important;
+}
+
+.kick-ext-sp-shortcut-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 11px !important;
+}
+
+.kick-ext-sp-shortcut-key {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #53fc18 !important; /* Kick Green */
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-family: monospace !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+}
+
+.kick-ext-sp-shortcut-desc {
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-weight: 500 !important;
+}
+
+/* ==========================================================================
+   Fullscreen Font Scaling (Variant 2: Native Font Size & Gap Reduction)
+   ========================================================================== */
+
+/* Reduce the overall padding/margins of the message box to eliminate large gaps */
+body.ext-fullscreen-active.kick-ext-extra-small-font #kick-ext-chat-overlay #channel-chatroom .group.relative {
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    min-height: 0 !important;
+}
+
+/* Force text elements to be 11px (one step smaller than Kick's minimum 12px) */
+body.ext-fullscreen-active.kick-ext-extra-small-font #kick-ext-chat-overlay #channel-chatroom .group.relative span,
+body.ext-fullscreen-active.kick-ext-extra-small-font #kick-ext-chat-overlay #channel-chatroom .group.relative .break-words {
+    font-size: 11px !important;
+    line-height: 16px !important;
+}
+
+/* Shrink badges and emotes to match the smaller text */
+body.ext-fullscreen-active.kick-ext-extra-small-font #kick-ext-chat-overlay #channel-chatroom .group.relative img {
+    max-height: 16px !important;
+    width: auto !important;
+}

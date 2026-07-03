@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Kick Extension",
+  "version": "1.0",
+  "description": "Custom modifications for Kick.com",
+  "permissions": ["storage", "activeTab"],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://kick.com/*"],
+      "js": [
+        "src/utils/dom.js",
+        "src/utils/observer.js",
+        "src/utils/settings.js",
+        "src/features/layout.js",
+        "src/features/transparency.js",
+        "src/features/draggable.js",
+        "src/features/resizable.js",
+        "src/features/fullscreen.js",
+        "src/features/chatSettingsInjector.js",
+        "src/features/friendsHighlight.js",
+        "src/features/mentionSound.js",
+        "src/content/content.js"
+      ],
+      "css": ["src/styles/base.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://kick.com/*"],
+      "js": ["src/content/bridge.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/styles/base.css"],
+      "matches": ["https://kick.com/*"]
+    }
+  ]
+}

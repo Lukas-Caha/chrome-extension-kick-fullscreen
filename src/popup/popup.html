@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kick Extension Settings</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <h1>Kick Extension</h1>
+            </div>
+            <span class="version">v1.0</span>
+        </header>
+
+        <section>
+            <div class="section-title">Chat Overlay</div>
+            
+            <div class="setting-item flex-row">
+                <div class="setting-label">Enable Fullscreen Chat</div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-enable-fs-chat" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Opacity</span>
+                    <span id="opacity-value">100%</span>
+                </div>
+                <input type="range" id="opacity-slider" min="0" max="100" value="100">
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Notifications</div>
+            <div class="setting-item flex-row">
+                <div class="setting-label">Sound on Mention/Reply</div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-mention-sound">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">Layout</div>
+            
+            <div class="setting-item flex-row">
+                <div class="setting-label">Chat Position</div>
+                <div class="toggle-group">
+                    <button id="btn-left" class="toggle-btn">Left</button>
+                    <button id="btn-right" class="toggle-btn active">Right</button>
+                </div>
+            </div>
+
+            <div class="setting-item flex-row">
+                <div class="setting-label">Hide Leaderboard</div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-leaderboard" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="setting-item flex-row">
+                <div class="setting-label">Hide Fullscreen Chat Header</div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-fs-header">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="setting-item flex-row">
+                <div class="setting-label">Hide Moderation Bar</div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-mod-bar">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="setting-item flex-row">
+                <div class="setting-label">Hide Kicks</div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-user-info">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="actions">
+            <button id="btn-reset" class="secondary-btn">Reset Layout</button>
+        </section>
+
+        <section class="shortcuts-section">
+            <div class="section-title">Keyboard Shortcuts</div>
+            <div class="shortcuts-panel">
+                <div class="shortcut-row">
+                    <span class="shortcut-key">Alt+F</span>
+                    <span class="shortcut-desc">Toggle Fullscreen Chat</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-key">Alt+G</span>
+                    <span class="shortcut-desc">Toggle Ghost Mode</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-key">Alt++ / Alt+-</span>
+                    <span class="shortcut-desc">Adjust Opacity (10%)</span>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

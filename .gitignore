@@ -1,0 +1,13 @@
+# Backups
+BACKUP*
+BEFORE_REVERT*
+src_backup*
+1.0/
+1.0new.zip
+
+# Logs and HTML backups
+Log/
+HTMLkick/
+
+# Text files
+*.txt
