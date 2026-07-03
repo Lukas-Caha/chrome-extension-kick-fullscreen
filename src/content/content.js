@@ -167,12 +167,8 @@ const initChatDetection = async () => {
   // Run handleDetection immediately to check if chat is already there
   handleDetection();
 
-  // Persistent observer for React rerenders and SPA navigation
-  window.KickExt.createObserver(
-    document.body,
-    () => handleDetection(),
-    { childList: true, subtree: true }
-  );
+  // Persistent subscription via own body observer for React rerenders and SPA navigation
+  window.KickExt.createObserver(document.body, () => handleDetection(), { childList: true, subtree: true });
 };
 
 // Bootstrap

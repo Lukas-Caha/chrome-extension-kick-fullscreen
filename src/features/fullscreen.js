@@ -117,6 +117,7 @@ const enterFullscreenChat = async () => {
   setupInputMonitor();
   start7TVObserver();
   applyFontScale();
+  watchProfileBanner();
 };
 
 // =========================================================================
@@ -238,6 +239,13 @@ const exitFullscreenChat = () => {
 
   isFullscreen = false;
 
+  // Clean up any active profile banners
+  try {
+    if (typeof cleanupProfileBanner === 'function') cleanupProfileBanner();
+  } catch (e) {
+    console.error('Kick Extension: Error cleaning up profile banner on exit', e);
+  }
+
   // Restore #seventv-root back to document.body
   const seventvRoot = document.getElementById('seventv-root');
   if (seventvRoot && seventvRoot.parentNode !== document.body) {
@@ -267,6 +275,7 @@ const exitFullscreenChat = () => {
   stopModActionsObserver();
   stop7TVObserver();
   cleanupInputMonitor();
+  stopProfileBannerObserver();
 
   if (overlay) overlay.remove();
 
@@ -544,6 +553,366 @@ const watchChatHeader = () => {
 const applyFontScale = async (value) => {
   const isExtraSmall = value ?? (await window.KickExt.settings.getSetting('extraSmallFullscreenFont')) ?? false;
   document.body.classList.toggle('kick-ext-extra-small-font', isExtraSmall);
+};
+
+// =========================================================================
+// Profile Banner — detect, relocate & position left of chat overlay
+// =========================================================================
+
+let profileBannerObserver = null;
+let profileBannerRemovalObserver = null;
+let activeProfileBanner = null;
+let isRelocatingBanner = false;
+let isRestoringBanner = false;
+let lastProfileAnchorRect = null;
+
+const PROFILE_BANNER_WIDTH = 356;
+const PROFILE_BANNER_GAP = 12;
+
+/**
+ * Returns true when `el` looks like a Kick profile card.
+ * Relaxed detection: bg-surface-highest + kick.com user link + any avatar image.
+ */
+const isProfileCard = (el) => {
+  if (!el || el.nodeType !== 1) return false;
+  if (!el.classList?.contains('bg-surface-highest')) return false;
+  // Profile link to kick.com/username
+  const link = el.querySelector('a[href*="kick.com/"]');
+  if (!link) return false;
+  // Any avatar image
+  const avatar = el.querySelector('img[alt]');
+  return !!avatar;
+};
+
+/** Searches `node` and its descendants for a profile card element. */
+const findProfileCardIn = (node) => {
+  if (!node || node.nodeType !== 1) return null;
+  // Fast path: node itself is the profile card
+  if (isProfileCard(node)) return node;
+  // Skip leaf nodes — no children means no card inside
+  if (!node.firstElementChild) return null;
+
+  // KEY OPTIMISATION: Only pay the cost of querySelectorAll for nodes that
+  // could plausibly be profile card containers. Radix portals are always
+  // appended at body level OR carry known Radix data-attributes. Regular chat
+  // message nodes are deep inside #channel-chatroom and have neither.
+  //
+  // This handles both Radix rendering stages:
+  //   Stage 1 — empty [data-radix-portal] appended to body  → isBodyLevel = true
+  //   Stage 2 — [data-radix-popper-content-wrapper] appended inside portal
+  //             → isPortalNode = true (has the attribute)
+  //   Stage 3 — .bg-surface-highest element appended inside popper
+  //             → caught already by isProfileCard(node) at the top
+  const parent = node.parentNode;
+  const isBodyLevel =
+    parent === document.body ||
+    parent === document.fullscreenElement ||
+    parent === document.webkitFullscreenElement;
+  const isPortalNode =
+    node.hasAttribute?.('data-radix-portal') ||
+    node.hasAttribute?.('data-radix-popper-content-wrapper') ||
+    node.id === 'user-identity';
+
+  if (!isBodyLevel && !isPortalNode) return null;
+
+  const all = node.querySelectorAll('.bg-surface-highest');
+  if (all) { for (const el of all) { if (isProfileCard(el)) return el; } }
+  return null;
+};
+
+const rememberProfileAnchor = (event) => {
+  const overlay = document.getElementById(OVERLAY_ID);
+  if (!overlay?.contains(event.target)) return;
+
+  const trigger = event.target.closest('button.inline.font-bold, button[data-prevent-expand], [data-chat-entry-username], a[href*="kick.com/"]');
+  if (!trigger) return;
+
+  lastProfileAnchorRect = trigger.getBoundingClientRect();
+};
+
+
+
+const positionProfileBanner = () => {
+  if (!activeProfileBanner) return;
+
+  const { wrapper } = activeProfileBanner;
+  const overlay = document.getElementById(OVERLAY_ID);
+  if (!wrapper || !overlay) return;
+
+  const overlayRect = overlay.getBoundingClientRect();
+  const anchorRect = lastProfileAnchorRect;
+  const wrapperHeight = wrapper.offsetHeight || 260;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let left = overlayRect.left - PROFILE_BANNER_WIDTH - PROFILE_BANNER_GAP;
+  if (left < PROFILE_BANNER_GAP) {
+    left = overlayRect.right + PROFILE_BANNER_GAP;
+  }
+  left = Math.max(PROFILE_BANNER_GAP, Math.min(left, viewportWidth - PROFILE_BANNER_WIDTH - PROFILE_BANNER_GAP));
+
+  const preferredTop = anchorRect
+    ? anchorRect.top - 24
+    : overlayRect.top;
+  const top = Math.max(
+    PROFILE_BANNER_GAP,
+    Math.min(preferredTop, viewportHeight - wrapperHeight - PROFILE_BANNER_GAP)
+  );
+
+  wrapper.style.left = `${Math.round(left)}px`;
+  wrapper.style.top = `${Math.round(top)}px`;
+};
+/** Starts observing for profile banner popups inside fullscreen. */
+const watchProfileBanner = () => {
+  if (profileBannerObserver) return;
+  if (!isFullscreen) return;
+  const fsContainer = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!fsContainer) return;
+
+  document.addEventListener('pointerdown', rememberProfileAnchor, true);
+  document.addEventListener('click', rememberProfileAnchor, true);
+
+  // INITIAL SCAN: If a profile banner is ALREADY open before we enter fullscreen.
+  // We iterate direct children of body/fsContainer rather than passing the containers
+  // themselves, because findProfileCardIn filters by node.parentNode — and only nodes
+  // whose parent IS body/fsContainer pass the portal check.
+  let existingCard = null;
+  for (const child of document.body.children) {
+    existingCard = findProfileCardIn(child);
+    if (existingCard) break;
+  }
+  if (!existingCard && fsContainer !== document.body) {
+    for (const child of fsContainer.children) {
+      existingCard = findProfileCardIn(child);
+      if (existingCard) break;
+    }
+  }
+  if (existingCard && !activeProfileBanner && !isRelocatingBanner) {
+    isRelocatingBanner = true;
+    setTimeout(() => {
+      isRelocatingBanner = false;
+      relocateProfileBanner(existingCard);
+    }, 20);
+  }
+
+  // Subscribe to the shared body observer instead of creating a new MutationObserver.
+  // document.body with subtree:true covers fsContainer too (it's a DOM descendant of body
+  // even in fullscreen mode — only the rendering layer changes, not the DOM tree).
+  //
+  // The expensive filtering (skipping chat messages vs. processing portal nodes) is done
+  // inside findProfileCardIn itself, which checks parentNode and Radix attributes.
+  // This correctly handles both stages of Radix portal rendering without any target filter here.
+  profileBannerObserver = (mutations) => {
+    if (!isFullscreen) return;
+    if (isRestoringBanner) return; // Ignore our own DOM restoration
+
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+        const card = findProfileCardIn(node);
+        if (card) {
+          if (!isRelocatingBanner) {
+            isRelocatingBanner = true;
+            // Delay moving the element so React finishes its render cycle
+            setTimeout(() => {
+              isRelocatingBanner = false;
+              relocateProfileBanner(card);
+            }, 20);
+          }
+          return;
+        }
+      }
+    }
+  };
+
+  window.KickExt.sharedBodyObserver.subscribe(profileBannerObserver);
+
+  console.log('Kick Extension: Profile banner observer started (via sharedBodyObserver)');
+};
+
+/** Moves the original profile card into the fullscreen container, left of overlay. */
+const relocateProfileBanner = (cardEl) => {
+  const fsContainer = document.fullscreenElement || document.webkitFullscreenElement;
+  const overlay = document.getElementById(OVERLAY_ID);
+  if (!fsContainer || !overlay) return;
+
+  // Clean up any existing banner first
+  cleanupProfileBanner();
+
+  // Find the topmost movable container (#user-identity → Radix portal → cursor-auto wrapper)
+  let toMove = cardEl;
+  const userIdentity = cardEl.closest('#user-identity');
+  
+  if (userIdentity) {
+    toMove = userIdentity;
+  } else {
+    const portal = cardEl.closest('[data-radix-portal]');
+    if (portal) {
+      toMove = portal;
+    } else {
+      const popperWrapper = cardEl.closest('[data-radix-popper-content-wrapper]');
+      if (popperWrapper) {
+        // Move the whole popper wrapper, or its portal parent
+        toMove = popperWrapper.closest('[data-radix-portal]') || popperWrapper;
+      } else {
+        const cursorWrap = cardEl.closest('[class*="cursor-auto"]');
+        if (cursorWrap && cursorWrap !== document.body) toMove = cursorWrap;
+      }
+    }
+  }
+
+  // Remember original location for cleanup
+  const origParent = toMove.parentNode;
+  const origNextSibling = toMove.nextSibling;
+  if (!origParent) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'kick-ext-fs-profile-banner';
+
+  wrapper.appendChild(toMove);
+  fsContainer.appendChild(wrapper);
+
+  // --- Custom Fullscreen Drag Logic ---
+  let isDraggingBanner = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let initialLeft = 0;
+  let initialTop = 0;
+
+  const onPointerDown = (e) => {
+    if (!activeProfileBanner) return;
+    const target = e.target;
+    // Allow clicking buttons, links, scrollbars, etc.
+    if (target.closest('button, a, input, [role="button"], .scrollbar-hide')) return;
+    
+    // Stop React from seeing this pointerdown so its native drag logic doesn't fire
+    // This prevents React state corruption that breaks normal mode dragging.
+    e.preventDefault();
+    e.stopPropagation();
+
+    isDraggingBanner = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    initialLeft = parseInt(wrapper.style.left || 0, 10) || 0;
+    initialTop = parseInt(wrapper.style.top || 0, 10) || 0;
+  };
+
+  const onPointerMove = (e) => {
+    if (!isDraggingBanner || !activeProfileBanner) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+
+    wrapper.style.left = `${initialLeft + dx}px`;
+    wrapper.style.top = `${initialTop + dy}px`;
+  };
+
+  const onPointerUp = (e) => {
+    if (isDraggingBanner) {
+      isDraggingBanner = false;
+      e.stopPropagation();
+    }
+  };
+
+  wrapper.addEventListener('pointerdown', onPointerDown, { capture: true });
+  document.addEventListener('pointermove', onPointerMove, { capture: true });
+  document.addEventListener('pointerup', onPointerUp, { capture: true });
+
+  // Handle clicks on buttons within the relocated wrapper.
+  // Because we moved the React node out of its portal, React's event delegation breaks.
+  wrapper.addEventListener('click', (e) => {
+    if (!activeProfileBanner) return;
+    const btn = e.target.closest('button, a');
+    if (!btn) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { movedElement } = activeProfileBanner;
+
+    // 1. Move it back to original parent FIRST so React's synthetic events work natively
+    cleanupProfileBanner();
+
+    // 2. Dispatch the click on the exact button
+    const clickEvent = new MouseEvent('click', { view: window, bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+    btn.dispatchEvent(clickEvent);
+
+    // 3. If it wasn't the Close button, React keeps it open. We bring it back to fullscreen.
+    const isCloseBtn = btn.classList.contains('absolute');
+    if (!isCloseBtn) {
+      setTimeout(() => {
+        if (movedElement.isConnected && document.body.contains(movedElement)) {
+          relocateProfileBanner(movedElement);
+        }
+      }, 100);
+    }
+  }, { capture: true });
+
+  // Store active state
+  activeProfileBanner = { wrapper, movedElement: toMove, origParent, origNextSibling, onPointerMove, onPointerUp };
+  requestAnimationFrame(positionProfileBanner);
+
+  // Escape key closes banner
+  activeProfileBanner._escHandler = (e) => { if (e.key === 'Escape') cleanupProfileBanner(); };
+  document.addEventListener('keydown', activeProfileBanner._escHandler);
+
+  // Watch for React-side removal (Kick unmounts the card content)
+  profileBannerRemovalObserver = new MutationObserver(() => {
+    if (!wrapper.querySelector('.bg-surface-highest')) cleanupProfileBanner();
+    else requestAnimationFrame(positionProfileBanner);
+  });
+  profileBannerRemovalObserver.observe(wrapper, { childList: true, subtree: true });
+
+  console.log('Kick Extension: Profile banner relocated to fullscreen');
+};
+
+
+
+/** Removes the fullscreen profile banner and restores the moved element. */
+const cleanupProfileBanner = () => {
+  if (profileBannerRemovalObserver) {
+    profileBannerRemovalObserver.disconnect();
+    profileBannerRemovalObserver = null;
+  }
+  if (!activeProfileBanner) return;
+
+  const { wrapper, movedElement, origParent, origNextSibling, _escHandler, onPointerMove, onPointerUp } = activeProfileBanner;
+  if (_escHandler) document.removeEventListener('keydown', _escHandler);
+  if (onPointerMove) document.removeEventListener('pointermove', onPointerMove, { capture: true });
+  if (onPointerUp) document.removeEventListener('pointerup', onPointerUp, { capture: true });
+
+  // Move element back so Kick / React can clean up properly
+  if (movedElement && origParent?.isConnected) {
+    try {
+      isRestoringBanner = true;
+      if (origNextSibling?.parentNode === origParent) {
+        origParent.insertBefore(movedElement, origNextSibling);
+      } else {
+        origParent.appendChild(movedElement);
+      }
+    } catch (_) { /* element may already be unmounted */ }
+    finally {
+      setTimeout(() => { isRestoringBanner = false; }, 0);
+    }
+  }
+
+  wrapper?.remove();
+  activeProfileBanner = null;
+};
+
+/** Stops the profile banner observer and cleans up. */
+const stopProfileBannerObserver = () => {
+  if (profileBannerObserver) {
+    window.KickExt.sharedBodyObserver.unsubscribe(profileBannerObserver);
+    profileBannerObserver = null;
+  }
+  document.removeEventListener('pointerdown', rememberProfileAnchor, true);
+  document.removeEventListener('click', rememberProfileAnchor, true);
+  lastProfileAnchorRect = null;
+  cleanupProfileBanner();
 };
 
 // Export to global namespace

@@ -169,7 +169,7 @@ const fhStartObserver = () => {
   // Guard: only one instance ever. Quick .bg-surface-highest check prevents
   // processing chat message nodes unnecessarily.
   if (!fhCardObserver) {
-    fhCardObserver = new MutationObserver((mutations) => {
+    fhCardObserver = (mutations) => {
       for (const m of mutations) {
         for (const node of m.addedNodes) {
           if (node.nodeType === 1 && (
@@ -180,8 +180,10 @@ const fhStartObserver = () => {
           }
         }
       }
-    });
-    fhCardObserver.observe(document.body, { childList: true, subtree: true });
+    };
+    // Subscribe to shared body observer — replaces standalone body MutationObserver.
+    // fhCardObserver is intentionally never unsubscribed (user cards appear throughout the page lifetime).
+    window.KickExt.sharedBodyObserver.subscribe(fhCardObserver);
   }
 };
 

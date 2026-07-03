@@ -1,5 +1,7 @@
 # Backups
 BACKUP*
+_archive/
+archive/
 BEFORE_REVERT*
 src_backup*
 1.0/

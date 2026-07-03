@@ -506,7 +506,9 @@ const startObserver = () => {
     }
   };
 
-  panelObserver = new MutationObserver((mutations) => {
+  // Subscribe to the shared body observer instead of creating a dedicated MutationObserver.
+  // The callback logic is identical — only the observer plumbing changes.
+  const cb = (mutations) => {
     for (const m of mutations) {
       // Fast path: check if the panel itself or a wrapper containing it was added
       for (const node of m.addedNodes) {
@@ -522,11 +524,10 @@ const startObserver = () => {
         return;
       }
     }
-  });
+  };
 
-  // document.body with subtree:true is sufficient — the panel is always inside body.
-  // (#kick-ext-chat-overlay is appended to the fullscreen element which is inside body)
-  panelObserver.observe(document.body, { childList: true, subtree: true });
+  panelObserver = cb; // Truthy value — guards against double-start same as before
+  window.KickExt.sharedBodyObserver.subscribe(cb);
 
   // Handle case where panel is already in the DOM on script load
   checkAndInject();

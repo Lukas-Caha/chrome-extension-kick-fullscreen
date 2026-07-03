@@ -901,3 +901,46 @@ body.ext-fullscreen-active.kick-ext-extra-small-font #kick-ext-chat-overlay #cha
     max-height: 16px !important;
     width: auto !important;
 }
+
+/* ==========================================================================
+   Profile Banner in Fullscreen — positioned left of chat overlay
+   The original Kick profile card is moved into this wrapper when a
+   username is clicked in fullscreen mode.
+   ========================================================================== */
+
+#kick-ext-fs-profile-banner {
+    position: fixed !important;
+    left: 12px;
+    top: 12px;
+    z-index: 10000000 !important;
+    width: 356px !important;
+    max-width: calc(100vw - 24px) !important;
+    height: auto !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+}
+
+/* Reset Kick's native absolute/popper positioning so it fits our fullscreen wrapper */
+#kick-ext-fs-profile-banner #user-identity,
+#kick-ext-fs-profile-banner [data-radix-popper-content-wrapper] {
+    position: relative !important;
+    inset: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+
+/* Ensure all content inside the banner is fully opaque */
+#kick-ext-fs-profile-banner span,
+#kick-ext-fs-profile-banner a,
+#kick-ext-fs-profile-banner button,
+#kick-ext-fs-profile-banner img,
+#kick-ext-fs-profile-banner div {
+    opacity: 1 !important;
+}
