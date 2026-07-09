@@ -7,7 +7,6 @@ const MS_STORAGE_KEY = 'enableMentionSound';
 let msEnabled = false;
 let msChatObserver = null;
 let msObservedChatRoom = null;
-let msInitializedTime = Date.now();
 
 // Single shared AudioContext - created once, reused forever after the page has a user gesture.
 let msAudioCtx = null;
@@ -71,6 +70,13 @@ let lastSoundTime = 0;
 // Stored in memory so it survives fullscreen DOM teardown/rebuild and chat panel hide/show.
 const msPlayedIds = new Set();
 const MAX_PLAYED_IDS = 1500;
+
+// WeakSet of DOM elements we have already made a final decision about (play or suppress).
+// This guards against identity changes on the same element (e.g. React hydrating
+// data-chat-entry-id after the row was already seeded with a fallback ID).
+// WeakSet is used so entries are automatically garbage-collected when the DOM element
+// is removed by React.
+const msHandledElements = new WeakSet();
 
 // Short-lived cooldown map: fallback fingerprint -> timestamp of last play.
 // This protects against double-ding when Kick rebuilds a row but no real message ID is available.
@@ -168,6 +174,8 @@ const getMessageIdentity = (row) => {
 /**
  * Marks all currently visible mention rows as already handled so reconnects, initial loads,
  * and fullscreen chat rebuilds don't replay old highlighted messages.
+ * This is called AFTER the DOM has settled and BEFORE the observer starts watching,
+ * so there is no race between seeding and observing.
  */
 const populateExistingMessageIds = () => {
     if (!msEnabled) return;
@@ -177,6 +185,10 @@ const populateExistingMessageIds = () => {
             if (!isMentionRow(row)) continue;
             const identity = getMessageIdentity(row);
             if (identity?.id) markIdAsPlayed(identity.id);
+            // Mark the DOM element so later observer mutations on this same element
+            // (e.g. React hydrating data-chat-entry-id) are ignored even if the
+            // computed identity string changes from fallback to stable.
+            msHandledElements.add(row);
         }
     } catch (e) {
         console.warn('Kick Extension: Error populating existing message IDs', e);
@@ -204,9 +216,23 @@ const collectChatRows = (node) => {
 let msLastScrollTime = 0;
 let msWasAtBottom = true;
 const MS_SCROLL_QUIET_MS = 700;
-const MS_INITIAL_QUIET_MS = 3000;
 const MS_ROW_SETTLE_MS = 80;
 const MS_MAX_ROW_RETRIES = 5;
+
+// How long to wait for the DOM to finish painting before seeding + attaching the observer.
+// This prevents the race where seeding runs before Kick has mounted all chat rows.
+const MS_DOM_SETTLE_MS = 200;
+
+// Debounce window for observer restarts triggered by fullscreen / SPA navigation.
+// Multiple triggers (e.g. both fullscreen events firing) collapse into one restart.
+const MS_RESTART_DEBOUNCE_MS = 300;
+
+// Timer for the seed-then-watch startup sequence. Also serves as an "is settling" guard
+// so a second msStartObserver() call during the settle window is a no-op.
+let msSettleTimer = null;
+
+// Debounce timer shared by all restart triggers (fullscreen change, SPA navigation).
+let msRestartTimer = null;
 
 const getScrollContainer = () => {
     const chatRoom = msObservedChatRoom || document.querySelector('#channel-chatroom');
@@ -226,10 +252,10 @@ const updateScrollState = () => {
 };
 
 const getSuppressReason = (meta) => {
-    const now = Date.now();
-    if (now - msInitializedTime < MS_INITIAL_QUIET_MS) return 'initial-quiet';
+    // No time-based quiet window here — seeding runs before the observer attaches,
+    // so any row not in msPlayedIds is genuinely new and should be allowed to play.
     if (meta?.forceSuppress) return meta.forceSuppress;
-    if (now - msLastScrollTime < MS_SCROLL_QUIET_MS && !msWasAtBottom) return 'scrolling-history';
+    if ((Date.now() - msLastScrollTime) < MS_SCROLL_QUIET_MS && !msWasAtBottom) return 'scrolling-history';
     if (!meta?.wasAtBottom) return 'not-at-bottom';
     return null;
 };
@@ -274,6 +300,12 @@ const evaluateRow = (row, meta) => {
         return false;
     }
 
+    // Element-level guard: if we already made a decision about this DOM element
+    // (via seeding or a previous evaluation), skip it. This prevents double-play
+    // when React hydrates a data-chat-entry-id after seeding used a fallback ID.
+    if (msHandledElements.has(row)) return false;
+    msHandledElements.add(row);
+
     if (msPlayedIds.has(identity.id)) return false;
 
     const suppressReason = getSuppressReason(meta);
@@ -311,62 +343,76 @@ function flushPendingRows() {
 }
 
 const msStartObserver = () => {
-    if (!msEnabled || msChatObserver) return;
+    // msSettleTimer being set means a startup sequence is already in progress — skip.
+    if (!msEnabled || msChatObserver || msSettleTimer) return;
 
     const chatRoom = document.querySelector('#channel-chatroom');
     if (!chatRoom) return;
 
     msObservedChatRoom = chatRoom;
-    msInitializedTime = Date.now();
     msWasAtBottom = computeAtBottom();
-    populateExistingMessageIds();
 
     chatRoom.addEventListener('scroll', updateScrollState, { capture: true, passive: true });
     window.addEventListener('scroll', updateScrollState, { capture: true, passive: true });
 
-    msChatObserver = new MutationObserver((mutations) => {
+    // Wait for the DOM to finish painting before seeding, then attach the observer.
+    // This guarantees seeding sees all pre-existing rows, so the observer only fires
+    // for genuinely new messages — no time-based quiet window needed.
+    msSettleTimer = window.setTimeout(() => {
+        msSettleTimer = null;
         if (!msEnabled) return;
 
-        const allRows = new Set();
-        let sawClassChange = false;
+        populateExistingMessageIds();
 
-        for (const m of mutations) {
-            if (m.type === 'attributes' && m.attributeName === 'class') {
-                sawClassChange = true;
-                for (const row of collectChatRows(m.target)) allRows.add(row);
-                continue;
+        msChatObserver = new MutationObserver((mutations) => {
+            if (!msEnabled) return;
+
+            const allRows = new Set();
+            let sawClassChange = false;
+
+            for (const m of mutations) {
+                if (m.type === 'attributes' && m.attributeName === 'class') {
+                    sawClassChange = true;
+                    for (const row of collectChatRows(m.target)) allRows.add(row);
+                    continue;
+                }
+
+                for (const node of m.addedNodes) {
+                    for (const row of collectChatRows(node)) allRows.add(row);
+                }
             }
 
-            for (const node of m.addedNodes) {
-                for (const row of collectChatRows(node)) allRows.add(row);
+            if (allRows.size === 0) return;
+
+            const largeHistoryBatch = allRows.size > 12 && !msWasAtBottom;
+            const forceSuppress = !msWasAtBottom ? 'not-at-bottom' : (largeHistoryBatch ? 'history-batch' : null);
+
+            for (const row of allRows) {
+                queueRow(row, {
+                    wasAtBottom: msWasAtBottom,
+                    forceSuppress,
+                    // Attribute-only mention updates are usually the final piece, so one retry is enough.
+                    retries: sawClassChange ? 1 : 0,
+                });
             }
-        }
+        });
 
-        if (allRows.size === 0) return;
-
-        const inInitialQuiet = Date.now() - msInitializedTime < MS_INITIAL_QUIET_MS;
-        const largeHistoryBatch = allRows.size > 12 && (inInitialQuiet || !msWasAtBottom);
-        const forceSuppress = inInitialQuiet ? 'initial-quiet' : (!msWasAtBottom ? 'not-at-bottom' : (largeHistoryBatch ? 'history-batch' : null));
-
-        for (const row of allRows) {
-            queueRow(row, {
-                wasAtBottom: msWasAtBottom,
-                forceSuppress,
-                // Attribute-only mention updates are usually the final piece, so one retry is enough.
-                retries: sawClassChange ? 1 : 0,
-            });
-        }
-    });
-
-    msChatObserver.observe(chatRoom, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class'],
-    });
+        msChatObserver.observe(chatRoom, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+    }, MS_DOM_SETTLE_MS);
 };
 
 const msStopObserver = () => {
+    // Cancel any in-progress settle/startup sequence.
+    if (msSettleTimer) {
+        window.clearTimeout(msSettleTimer);
+        msSettleTimer = null;
+    }
+
     if (msChatObserver) {
         msChatObserver.disconnect();
         msChatObserver = null;
@@ -394,8 +440,6 @@ const updateObserverState = () => {
 };
 
 const init = async () => {
-    msInitializedTime = Date.now();
-
     document.addEventListener('pointerdown', unlockAudio, { capture: true, passive: true });
     document.addEventListener('keydown', unlockAudio, { capture: true, passive: true });
 
@@ -413,7 +457,6 @@ const init = async () => {
             const oldVal = msEnabled;
             msEnabled = message.value;
             if (msEnabled && !oldVal) {
-                msInitializedTime = Date.now();
                 unlockAudio();
             }
             updateObserverState();
@@ -425,7 +468,6 @@ const init = async () => {
             const oldVal = msEnabled;
             msEnabled = changes[MS_STORAGE_KEY].newValue;
             if (msEnabled && !oldVal) {
-                msInitializedTime = Date.now();
                 unlockAudio();
             }
             updateObserverState();
@@ -441,21 +483,31 @@ if (document.readyState === 'loading') {
     init();
 }
 
-let msReconnectTimer = null;
-const scheduleObserverReconnect = () => {
-    if (!msEnabled || msReconnectTimer) return;
-    msReconnectTimer = window.setTimeout(() => {
-        msReconnectTimer = null;
+/**
+ * Schedules a debounced observer restart.
+ * All restart triggers (SPA navigation, fullscreen) funnel through here so they can't
+ * race against each other. The current observer keeps running during the debounce window,
+ * so no mentions are missed while waiting.
+ * @param {boolean} force - If true, restarts even if the chatRoom element hasn't changed.
+ */
+const scheduleObserverRestart = (force = false) => {
+    if (!msEnabled) return;
+    if (msRestartTimer) window.clearTimeout(msRestartTimer);
+
+    msRestartTimer = window.setTimeout(() => {
+        msRestartTimer = null;
         const chatRoom = document.querySelector('#channel-chatroom');
-        if (!chatRoom || chatRoom === msObservedChatRoom) return;
+        if (!chatRoom) return;
+        // For non-forced restarts (SPA navigation), only restart if the chatRoom node itself changed.
+        if (!force && chatRoom === msObservedChatRoom && msChatObserver) return;
         msStopObserver();
         msStartObserver();
-    }, 250);
+    }, MS_RESTART_DEBOUNCE_MS);
 };
 
 try {
     if (window.KickExt.createObserver) {
-        window.KickExt.createObserver(document.body, scheduleObserverReconnect, { childList: true, subtree: true });
+        window.KickExt.createObserver(document.body, () => scheduleObserverRestart(false), { childList: true, subtree: true });
     }
 } catch (e) {
     console.warn('Kick Extension [mentionSound]: failed to hook observer re-attachment', e);
@@ -463,11 +515,7 @@ try {
 
 const msHandleFullscreenChange = () => {
     if (!msEnabled) return;
-    setTimeout(() => {
-        msStopObserver();
-        msStartObserver();
-    }, 500);
+    scheduleObserverRestart(true);
 };
 document.addEventListener('fullscreenchange', msHandleFullscreenChange);
 document.addEventListener('webkitfullscreenchange', msHandleFullscreenChange);
-

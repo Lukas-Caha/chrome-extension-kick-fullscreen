@@ -53,7 +53,7 @@ body.ext-chat-left #channel-chatroom {
 :root {
     --kick-ext-bg-alpha: 1; /* Default to solid */
     --kick-ext-panel-alpha: 1;
-    --kick-ext-blur: 6px; /* Blur level: 0px (off), 2px (light), 6px (full) */
+    --kick-ext-blur: 0px; /* Default off; JS applies saved level: 0px (off), 1px (light), 6px (full) */
 }
 
 /**

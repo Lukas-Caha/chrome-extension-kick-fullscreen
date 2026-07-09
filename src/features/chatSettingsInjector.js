@@ -223,7 +223,7 @@ const showExtSettings = async (panel) => {
   const currentBlur = s.blurLevel ?? '6';
   if (blurOff && blurLight && blurFull) {
     blurOff.classList.toggle('active',   currentBlur === '0');
-    blurLight.classList.toggle('active', currentBlur === '2');
+    blurLight.classList.toggle('active', currentBlur === '1');
     blurFull.classList.toggle('active',  currentBlur === '6');
   }
 
@@ -269,12 +269,12 @@ const showExtSettings = async (panel) => {
     // Blur level buttons
     const setBlurActive = (level) => {
       blurOff?.classList.toggle('active',   level === '0');
-      blurLight?.classList.toggle('active', level === '2');
+      blurLight?.classList.toggle('active', level === '1');
       blurFull?.classList.toggle('active',  level === '6');
       applySetting('blurLevel', level);
     };
     blurOff?.addEventListener('click',   () => setBlurActive('0'));
-    blurLight?.addEventListener('click', () => setBlurActive('2'));
+    blurLight?.addEventListener('click', () => setBlurActive('1'));
     blurFull?.addEventListener('click',  () => setBlurActive('6'));
 
     extPanel.querySelector('#kick-ext-sp-reset')?.addEventListener('click', () => {

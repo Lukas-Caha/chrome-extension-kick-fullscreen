@@ -13,3 +13,6 @@ HTMLkick/
 
 # Text files
 *.txt
+
+# Internal notes
+LessonsLearned/

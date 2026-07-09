@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS = {
   hideUserInfo: false,
   extraSmallFullscreenFont: false,
   enableMentionSound: false,
-  blurLevel: '6', // '0' = off, '2' = light, '6' = full
+  blurLevel: '6', // '0' = off, '1' = light, '6' = full
 };
 
 /**
