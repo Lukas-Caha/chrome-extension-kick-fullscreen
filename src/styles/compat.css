@@ -1,0 +1,28 @@
+/* ==========================================================================
+   Mo'Kick Extension Compatibility Support
+   ========================================================================== */
+
+/* Elevate the hovered chat entry so that its child menus and tooltips (like Mo'Kick) 
+   render on top of emotes/text from other chat messages */
+#kick-ext-chat-overlay .chat-entry:hover,
+#kick-ext-chat-overlay .chatroom-line:hover {
+    position: relative !important;
+    z-index: 99 !important;
+}
+
+/* Ensure Mo'Kick buttons, menus, and tooltips are fully opaque and not affected by transparency settings */
+#kick-ext-chat-overlay [data-mo-kick-injected="true"],
+#kick-ext-chat-overlay [data-mo-kick-injected="true"] *,
+#kick-ext-chat-overlay [class*="mokick" i],
+#kick-ext-chat-overlay [class*="mokick" i] * {
+    opacity: 1 !important;
+}
+
+/* Ensure Mo'Kick tooltips (dynamic or pseudo-elements) stay on top and maintain correct z-index */
+#kick-ext-chat-overlay [data-mo-kick-injected="true"] button::after,
+#kick-ext-chat-overlay [data-mo-kick-injected="true"] button::before,
+#kick-ext-chat-overlay [class*="mokick" i]::after,
+#kick-ext-chat-overlay [class*="mokick" i]::before {
+    z-index: 100 !important;
+    opacity: 1 !important;
+}

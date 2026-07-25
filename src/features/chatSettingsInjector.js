@@ -87,6 +87,18 @@ const buildExtPanel = () => {
         </label>
       </div>
 
+      <div class="kick-ext-sp-section-title">Appearance</div>
+
+      <div class="kick-ext-sp-item" style="padding-top: 6px; padding-bottom: 6px;">
+        <div class="kick-ext-sp-label" style="margin-bottom: 6px;">Brand Color</div>
+        <div class="kick-ext-sp-btn-group full-width-grid">
+          <button id="kick-ext-sp-theme-green"    class="kick-ext-sp-btn">Green</button>
+          <button id="kick-ext-sp-theme-silver"   class="kick-ext-sp-btn">Silver</button>
+          <button id="kick-ext-sp-theme-burgundy" class="kick-ext-sp-btn">Burgundy</button>
+          <button id="kick-ext-sp-theme-rainbow"  class="kick-ext-sp-btn">Rainbow</button>
+        </div>
+      </div>
+
       <div class="kick-ext-sp-section-title">Layout</div>
 
       <div class="kick-ext-sp-item kick-ext-sp-row">
@@ -159,6 +171,14 @@ const buildExtPanel = () => {
           <span class="kick-ext-sp-shortcut-key">Alt++ / Alt+-</span>
           <span class="kick-ext-sp-shortcut-desc">Adjust Opacity (10%)</span>
         </div>
+        <div class="kick-ext-sp-shortcut-row">
+          <span class="kick-ext-sp-shortcut-key">Alt+V</span>
+          <span class="kick-ext-sp-shortcut-desc">Toggle Quick Clipboard</span>
+        </div>
+        <div class="kick-ext-sp-shortcut-row">
+          <span class="kick-ext-sp-shortcut-key">Alt+N</span>
+          <span class="kick-ext-sp-shortcut-desc">Coop Stream Window</span>
+        </div>
       </div>
 
     </div>
@@ -216,6 +236,19 @@ const showExtSettings = async (panel) => {
   if (elUserInfo)    elUserInfo.checked    = s.hideUserInfo             ?? false;
   if (elMentionSound) elMentionSound.checked = s.enableMentionSound     ?? false;
 
+  // Theme buttons
+  const themeGreen    = extPanel.querySelector('#kick-ext-sp-theme-green');
+  const themeSilver   = extPanel.querySelector('#kick-ext-sp-theme-silver');
+  const themeBurgundy = extPanel.querySelector('#kick-ext-sp-theme-burgundy');
+  const themeRainbow  = extPanel.querySelector('#kick-ext-sp-theme-rainbow');
+  const activeThemeVal = s.theme ?? 'silver';
+  if (themeGreen && themeSilver && themeBurgundy && themeRainbow) {
+    themeGreen.classList.toggle('active',    activeThemeVal === 'green');
+    themeSilver.classList.toggle('active',   activeThemeVal === 'silver');
+    themeBurgundy.classList.toggle('active', activeThemeVal === 'burgundy');
+    themeRainbow.classList.toggle('active',  activeThemeVal === 'rainbow');
+  }
+
   // Blur level buttons
   const blurOff   = extPanel.querySelector('#kick-ext-sp-blur-off');
   const blurLight = extPanel.querySelector('#kick-ext-sp-blur-light');
@@ -256,6 +289,35 @@ const showExtSettings = async (panel) => {
       btnRight.classList.add('active');
       btnLeft?.classList.remove('active');
       applySetting('chatSide', 'right');
+    });
+
+    themeGreen?.addEventListener('click', () => {
+      themeGreen.classList.add('active');
+      themeSilver?.classList.remove('active');
+      themeBurgundy?.classList.remove('active');
+      themeRainbow?.classList.remove('active');
+      applySetting('theme', 'green');
+    });
+    themeSilver?.addEventListener('click', () => {
+      themeSilver.classList.add('active');
+      themeGreen?.classList.remove('active');
+      themeBurgundy?.classList.remove('active');
+      themeRainbow?.classList.remove('active');
+      applySetting('theme', 'silver');
+    });
+    themeBurgundy?.addEventListener('click', () => {
+      themeBurgundy.classList.add('active');
+      themeGreen?.classList.remove('active');
+      themeSilver?.classList.remove('active');
+      themeRainbow?.classList.remove('active');
+      applySetting('theme', 'burgundy');
+    });
+    themeRainbow?.addEventListener('click', () => {
+      themeRainbow.classList.add('active');
+      themeGreen?.classList.remove('active');
+      themeSilver?.classList.remove('active');
+      themeBurgundy?.classList.remove('active');
+      applySetting('theme', 'rainbow');
     });
 
     elEnableFsChat?.addEventListener('change', (e) => applySetting('enableFullscreenChat', e.target.checked));
@@ -402,6 +464,11 @@ const applySetting = (key, value) => {
       break;
     case 'blurLevel':
       document.documentElement.style.setProperty('--kick-ext-blur', value === '0' ? '0px' : `${value}px`);
+      break;
+    case 'theme':
+      if (window.KickExt.theme) {
+        window.KickExt.theme.setTheme(value);
+      }
       break;
   }
 };

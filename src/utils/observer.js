@@ -42,6 +42,12 @@ let _sharedBodyMO = null;
 
 const _ensureSharedBodyObserver = () => {
   if (_sharedBodyMO) return;
+  if (!document.body) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => _ensureSharedBodyObserver(), { once: true });
+    }
+    return;
+  }
   _sharedBodyMO = new MutationObserver((mutations) => {
     for (const cb of _bodySubscribers) {
       try {

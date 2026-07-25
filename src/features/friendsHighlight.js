@@ -10,6 +10,8 @@ const FH_STORAGE_KEY  = 'friendUsernames';
 let fhFriendSet = new Set();
 let fhChatObserver = null;
 let fhCardObserver = null;
+let fhObservedChatRoom = null;
+let fhRestartTimer = null;
 
 /**
  * Extracts the username of the message sender.
@@ -73,10 +75,28 @@ const fhCheckForUserCard = (node) => {
   const card = node.querySelector?.('.bg-surface-highest') || (node.classList?.contains('bg-surface-highest') ? node : null);
   if (!card) return;
 
-  // Verify it is a user card by checking for the username link and Follow/Report buttons
+  // Verify it is a user card by checking for the username link and Follow button container.
+  // React renders the card progressively — some elements may not exist yet.
   const userLink = card.querySelector('a[href^="https://kick.com/"]');
-  const actionRow = card.querySelector('div.flex.h-8.items-center.justify-between');
-  if (!userLink || !actionRow) return;
+  const followBtn = card.querySelector('button[aria-label="Follow"], button[aria-label="Unfollow"]');
+  const buttonRow = followBtn?.parentElement;
+
+  if (!userLink || !buttonRow) {
+    if (!card.dataset.kickExtFhRetried) {
+      card.dataset.kickExtFhRetried = 'true';
+      setTimeout(() => {
+        fhCheckForUserCard(card);
+        // Clear flag shortly after so future card mounts/clicks can retry too
+        setTimeout(() => {
+          delete card.dataset.kickExtFhRetried;
+        }, 100);
+      }, 200); // 200ms gives React plenty of time
+    }
+    return;
+  }
+
+  // Clear retry flag on success
+  delete card.dataset.kickExtFhRetried;
 
   const username = (userLink.title || userLink.textContent).trim();
   if (!username) return;
@@ -84,23 +104,20 @@ const fhCheckForUserCard = (node) => {
   // Avoid double injection
   if (card.querySelector('.kick-ext-friend-toggle')) return;
 
-  // Find the left button group containing the Follow button
-  const leftButtonGroup = actionRow.querySelector('.flex.items-center.gap-1');
-  if (!leftButtonGroup) return;
-
-  // Create our friend toggle button
+  // Create our friend toggle button — matches Kick's current pill-button style
   const toggleBtn = document.createElement('button');
   toggleBtn.className = [
-    'group relative box-border flex shrink-0 grow-0 select-none items-center justify-center gap-2',
-    'whitespace-nowrap rounded font-semibold ring-0 transition-all focus-visible:outline-none',
-    'active:scale-[0.95] disabled:pointer-events-none [&_svg]:size-[1em] state-layer-surface',
-    'bg-secondary-base text-secondary-onSecondary [&_svg]:fill-current focus-visible:bg-secondary-base',
-    'disabled:bg-disabled-base size-8 text-sm leading-none kick-ext-friend-toggle'
+    'group inline-flex gap-1.5 items-center justify-center rounded font-semibold box-border',
+    'relative transition-all betterhover:active:scale-[0.98] disabled:pointer-events-none',
+    'select-none whitespace-nowrap',
+    'state-layer-surface bg-secondary-base text-secondary-onSecondary',
+    'focus-visible:bg-secondary-base disabled:bg-disabled-base',
+    'px-3 py-2.5 text-base kick-ext-friend-toggle'
   ].join(' ');
 
-  // SVG stars
-  const starOutline = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
-  const starFilled = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FEB635" stroke="#FEB635" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+  // SVG stars (20×20 for visual parity with Follow/Mute pill buttons)
+  const starOutline = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+  const starFilled = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FEB635" stroke="#FEB635" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
 
   const nameLower = username.toLowerCase();
   let isFriend = fhFriendSet.has(nameLower);
@@ -137,7 +154,7 @@ const fhCheckForUserCard = (node) => {
     }
   });
 
-  leftButtonGroup.appendChild(toggleBtn);
+  buttonRow.appendChild(toggleBtn);
 };
 
 /**
@@ -162,6 +179,7 @@ const fhStartObserver = () => {
 
   const chatRoom = document.querySelector('#channel-chatroom');
   if (chatRoom) {
+    fhObservedChatRoom = chatRoom;
     fhChatObserver.observe(chatRoom, { childList: true, subtree: true });
   }
 
@@ -172,11 +190,31 @@ const fhStartObserver = () => {
     fhCardObserver = (mutations) => {
       for (const m of mutations) {
         for (const node of m.addedNodes) {
-          if (node.nodeType === 1 && (
+          if (node.nodeType !== 1) continue;
+
+          // Direct .bg-surface-highest match (legacy path)
+          if (
             node.classList?.contains('bg-surface-highest') ||
             node.querySelector?.('.bg-surface-highest')
-          )) {
+          ) {
             fhCheckForUserCard(node);
+            continue;
+          }
+
+          // New Kick layout: #user-identity is added first, card content rendered progressively
+          if (node.id === 'user-identity' || node.querySelector?.('#user-identity')) {
+            const target = node.id === 'user-identity' ? node : node.querySelector('#user-identity');
+            // Try immediately in case card is already populated
+            const card = target.querySelector('.bg-surface-highest');
+            if (card) {
+              fhCheckForUserCard(card);
+            } else {
+              // React hasn't rendered the card yet — retry shortly
+              setTimeout(() => {
+                const c = target.querySelector('.bg-surface-highest');
+                if (c) fhCheckForUserCard(c);
+              }, 150);
+            }
           }
         }
       }
@@ -196,6 +234,7 @@ const fhStopObserver = () => {
     fhChatObserver.disconnect();
     fhChatObserver = null;
   }
+  fhObservedChatRoom = null;
 };
 
 /**
@@ -242,6 +281,17 @@ const fhInit = async () => {
   console.log(`Kick Extension: Friends Highlight initialized with ${fhFriendSet.size} friends.`);
 };
 
+// Listen for storage changes from popup or other contexts
+if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes[FH_STORAGE_KEY]) {
+      const newFriends = changes[FH_STORAGE_KEY].newValue || [];
+      fhFriendSet = new Set(newFriends.map((u) => u.toLowerCase()));
+      fhApplyHighlights();
+    }
+  });
+}
+
 // Export to extension namespace
 window.KickExt = window.KickExt || {};
 window.KickExt.friendsHighlight = {
@@ -252,19 +302,60 @@ window.KickExt.friendsHighlight = {
   applyHighlights: fhApplyHighlights,
 };
 
+const FH_RESTART_DEBOUNCE_MS = 300;
+
+/**
+ * Schedules a debounced observer restart.
+ * All restart triggers (SPA navigation, fullscreen) funnel through here so they don't
+ * repeatedly rescan the chat on every DOM mutation.
+ * @param {boolean} force - If true, restarts even if the chatRoom element hasn't changed.
+ */
+const fhScheduleObserverRestart = (force = false) => {
+  if (fhRestartTimer) window.clearTimeout(fhRestartTimer);
+
+  fhRestartTimer = window.setTimeout(() => {
+    fhRestartTimer = null;
+    const chatRoom = document.querySelector('#channel-chatroom');
+    if (!chatRoom) return;
+    if (!force && chatRoom === fhObservedChatRoom && fhChatObserver) return;
+    fhStopObserver();
+    fhStartObserver();
+    fhApplyHighlights();
+  }, FH_RESTART_DEBOUNCE_MS);
+};
+
 // Re-attach observer when navigation or fullscreen changes the chat room element
 try {
-  if (window.KickExt.createObserver) {
-    window.KickExt.createObserver(document.body, () => {
-      if (!document.querySelector('#channel-chatroom')) return;
-      fhStopObserver();
-      fhStartObserver();
-      fhApplyHighlights();
-    }, { childList: true, subtree: false });
+  if (window.KickExt.sharedBodyObserver) {
+    window.KickExt.sharedBodyObserver.subscribe(() => fhScheduleObserverRestart(false));
   }
 } catch (e) {
   console.warn('Kick Extension [friendsHighlight]: failed to hook observer re-attachment', e);
 }
+
+const fhHandleFullscreenChange = () => {
+  fhScheduleObserverRestart(true);
+};
+document.addEventListener('fullscreenchange', fhHandleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', fhHandleFullscreenChange);
+
+// ---------------------------------------------------------------------------
+// Polling Fallback for User Profile Card Detection
+// ---------------------------------------------------------------------------
+// MutationObservers can miss the card opening when React updates #user-identity
+// in-place rather than adding/removing nodes. This lightweight interval catches
+// any card that the observer missed and injects the friend star.
+setInterval(() => {
+  const identityEl = document.querySelector('#user-identity');
+  if (!identityEl) return;
+  const card = identityEl.querySelector('.bg-surface-highest');
+  if (!card) return;
+  if (card.querySelector('.kick-ext-friend-toggle')) return; // already injected
+  const followBtn = card.querySelector('button[aria-label="Follow"], button[aria-label="Unfollow"]');
+  const userLink = card.querySelector('a[href^="https://kick.com/"]');
+  if (!followBtn || !userLink) return; // card not fully rendered yet
+  fhCheckForUserCard(card);
+}, 300);
 
 // Auto bootstrap
 if (document.readyState === 'loading') {

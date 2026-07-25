@@ -19,6 +19,9 @@ const DEFAULT_SETTINGS = {
   extraSmallFullscreenFont: false,
   enableMentionSound: false,
   blurLevel: '6', // '0' = off, '1' = light, '6' = full
+  quickClipboardSnippets: [],
+  coopStreamLastUsername: '',
+  theme: 'silver', // 'silver' = Liquid Silver, 'green' = Basic Green
 };
 
 /**
@@ -27,6 +30,9 @@ const DEFAULT_SETTINGS = {
  * @returns {Promise<any>}
  */
 const getSetting = async (key) => {
+  if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+    return DEFAULT_SETTINGS[key];
+  }
   try {
     const result = await chrome.storage.local.get([key]);
     return result[key] ?? DEFAULT_SETTINGS[key];
@@ -42,6 +48,9 @@ const getSetting = async (key) => {
  * @param {any} value 
  */
 const saveSetting = async (key, value) => {
+  if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+    return;
+  }
   try {
     await chrome.storage.local.set({ [key]: value });
   } catch (error) {
@@ -54,6 +63,9 @@ const saveSetting = async (key, value) => {
  * @returns {Promise<Object>}
  */
 const getAllSettings = async () => {
+  if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+    return DEFAULT_SETTINGS;
+  }
   try {
     const result = await chrome.storage.local.get(null);
     return { ...DEFAULT_SETTINGS, ...result };

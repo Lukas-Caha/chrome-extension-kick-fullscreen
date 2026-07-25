@@ -1,0 +1,167 @@
+/* ==========================================================================
+   Chat Message Hover - Frosted Glass Effect
+   Targets both normal and reply messages with a unified, performant style.
+   ========================================================================== */
+
+/* 1. Base state - transitions and rounding */
+#kick-ext-chat-overlay #channel-chatroom .group.relative > .w-full.min-w-0.shrink-0.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .group.relative .flex.w-full.min-w-0.shrink-0.flex-col.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .inline-flex.min-w-0.flex-nowrap.items-baseline.rounded.betterhover\:hover\:bg-\[\#474f54\] {
+    /* Kill ALL transitions on exit to prevent ghosting/stickiness */
+    transition: none !important;
+    border-radius: 0.5rem !important;
+}
+
+/* 2. Hover state - instant, GPU-friendly background swap */
+#kick-ext-chat-overlay #channel-chatroom .group.relative:hover > .w-full.min-w-0.shrink-0.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .group.relative:hover .flex.w-full.min-w-0.shrink-0.flex-col.break-words.rounded-lg,
+#kick-ext-chat-overlay #channel-chatroom .group.relative:hover .betterhover\:group-hover\:bg-surface-highest,
+#kick-ext-chat-overlay #channel-chatroom .inline-flex.min-w-0.flex-nowrap.items-baseline.rounded.betterhover\:hover\:bg-\[\#474f54\]:hover {
+    background-color: rgba(30, 30, 30, 0.45) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+/* ==========================================================================
+   Gifted Subs Marquee Indicator Row
+   Darker background with a blur effect and a bottom border to match other panels.
+   ========================================================================== */
+#kick-ext-chat-overlay div:has(> .animate-marquee) {
+    background-color: rgba(10, 10, 10, var(--kick-ext-panel-alpha)) !important;
+    background-image: none !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    will-change: backdrop-filter;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    z-index: 10 !important;
+}
+
+/* Hide Top Gifted / Leaderboard Header */
+body.kick-ext-hide-leaderboard #kick-ext-chat-overlay div:has(> .relative.flex.flex-col.justify-end.text-sm.font-medium),
+body.kick-ext-hide-leaderboard #kick-ext-chat-overlay .relative.flex.flex-col.justify-end.text-sm.font-medium,
+body.kick-ext-hide-leaderboard #kick-ext-chat-overlay button[aria-label="Expand leaderboard"] {
+    display: none !important;
+}
+
+/* Hide Moderation Bar Toggle */
+body.kick-ext-hide-mod-bar #kick-ext-chat-overlay .flex.items-center.justify-evenly.border-b-2 {
+    display: none !important;
+}
+
+/* Hide User Info Header */
+body.kick-ext-hide-user-info #kick-ext-chat-overlay .z-absolute.relative.bg-surface-lowest.\!z-\[102\].overflow-visible.rounded-none.p-2,
+body.kick-ext-hide-user-info #kick-ext-chat-overlay .z-absolute.relative.bg-surface-lowest.p-2:has(button) {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Chat Settings Panel — height fix inside fullscreen overlay
+   Same clamp approach as 7TV emote menu: limits max-height based on
+   --kick-ext-overlay-h so the panel never overflows the overlay bounds
+   (critical when chat is short or positioned near the top of the screen).
+   Formula: overlay_height - 105px (handle 12px + input ~78px + buffer 15px)
+   ========================================================================== */
+
+#kick-ext-chat-overlay #chat-settings-panel,
+#kick-ext-chat-overlay #rewards-panel,
+#kick-ext-chat-overlay #chat-emotes-picker-panel,
+#kick-ext-chat-overlay #chat-command-suggestion-panel {
+    z-index: 100 !important;
+}
+
+/* ABSOLUTE PANELS: Need height clamps because they are out of flex flow */
+#kick-ext-chat-overlay #chat-settings-panel .min-h-0.flex-1.overflow-y-auto,
+#kick-ext-chat-overlay #chat-emotes-picker-panel .overflow-y-auto,
+#kick-ext-chat-overlay #chat-command-suggestion-panel .overflow-y-auto {
+    overflow-y: auto !important;
+    max-height: clamp(80px, calc(var(--kick-ext-overlay-h, 65vh) - 180px), 476px) !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+}
+
+#kick-ext-chat-overlay #rewards-panel .overflow-y-auto {
+    overflow-y: auto !important;
+    max-height: clamp(80px, calc(var(--kick-ext-overlay-h, 65vh) - 150px), 476px) !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+}
+
+/* RELATIVE PANELS: Sit inside the chat input container, which doesn't shrink. Must be clamped! */
+#kick-ext-chat-overlay #gift-shop-panel .overflow-y-auto,
+#kick-ext-chat-overlay [data-testid="gift-shop-panel"] .overflow-y-auto {
+    overflow-y: auto !important;
+    max-height: clamp(80px, calc(var(--kick-ext-overlay-h, 65vh) - 130px), 476px) !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+}
+
+/* ==========================================================================
+   Ghost Mode — Click-Through Chat Overlay
+   Toggled via the ghost button in the drag handle or Alt+G.
+   Messages become click-through; drag handle + input stay interactive.
+   ========================================================================== */
+
+/* Ghost toggle button in the drag handle */
+#kick-ext-ghost-btn {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 3px 5px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.15s ease, background 0.15s ease !important;
+  line-height: 1 !important;
+}
+
+#kick-ext-ghost-btn:hover {
+  color: rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Active (Ghost Mode ON) — glows Kick green */
+#kick-ext-ghost-btn.active {
+  color: #53fc18 !important;
+  background: rgba(83, 252, 24, 0.12) !important;
+  filter: drop-shadow(0 0 4px rgba(83, 252, 24, 0.5)) !important;
+}
+
+#kick-ext-ghost-btn.active:hover {
+  background: rgba(83, 252, 24, 0.2) !important;
+}
+
+/* Make the handle position:relative so we can absolutely-position the ghost btn */
+#kick-ext-chat-handle {
+  position: relative !important;
+}
+
+/* ---- Ghost Mode ON: overlay dims and chat content is click-through ---- */
+
+/* Reduce overall overlay opacity to hint it's in ghost mode */
+#kick-ext-chat-overlay.kick-ext-ghost-mode {
+  opacity: 0.45 !important;
+  transition: opacity 0.25s ease !important;
+}
+
+/* When the mouse is over the drag handle, un-dim so the user can grab/click */
+#kick-ext-chat-overlay.kick-ext-ghost-mode:hover {
+  opacity: 0.65 !important;
+}
+
+/* The overlay itself passes all pointer events through… */
+#kick-ext-chat-overlay.kick-ext-ghost-mode {
+  pointer-events: none !important;
+}
+
+/* …except the drag handle and the ghost button remain interactive */
+#kick-ext-chat-overlay.kick-ext-ghost-mode #kick-ext-chat-handle,
+#kick-ext-chat-overlay.kick-ext-ghost-mode #kick-ext-ghost-btn {
+  pointer-events: auto !important;
+}

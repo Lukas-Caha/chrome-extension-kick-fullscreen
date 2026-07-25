@@ -135,23 +135,32 @@ input[type=range]::-webkit-slider-thumb {
     background: #24272c;
     padding: 2px;
     border-radius: 6px;
+    gap: 2px;
+}
+
+.toggle-group.full-width-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
 }
 
 .toggle-btn {
     background: transparent;
     border: none;
     color: var(--text-dim);
-    padding: 6px 12px;
+    padding: 6px 8px;
     font-size: 11px;
     font-weight: 600;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .toggle-btn.active {
-    background: #3a3f47;
-    color: white;
+    background: var(--kick-green);
+    color: #000000;
 }
 
 /* Switch Styling */
@@ -267,4 +276,54 @@ input:checked + .slider:before {
 .shortcut-desc {
     color: var(--text-dim);
     font-weight: 500;
+}
+
+/* Silver Theme Overrides for Extension Popup */
+body.theme-silver {
+    --kick-green: #cbd5e1;
+}
+
+body.theme-silver .logo-icon {
+    box-shadow: 0 0 10px rgba(203, 213, 225, 0.35);
+}
+
+body.theme-silver .toggle-btn.active {
+    background: #475569;
+    color: #ffffff;
+}
+
+/* Burgundy Theme Overrides for Extension Popup */
+body.theme-burgundy {
+    --kick-green: #800020;
+}
+
+body.theme-burgundy .logo-icon {
+    box-shadow: 0 0 10px rgba(128, 0, 32, 0.4);
+}
+
+body.theme-burgundy .toggle-btn.active {
+    background: #800020;
+    color: #ffffff;
+}
+
+/* Rainbow Theme Overrides for Extension Popup */
+body.theme-rainbow {
+    --kick-green: #00e676;
+}
+
+body.theme-rainbow .logo-icon {
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+}
+
+body.theme-rainbow .toggle-btn.active {
+    background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%);
+    color: #ffffff;
+}
+
+body.theme-rainbow input:checked + .slider {
+    background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%);
+}
+
+body.theme-rainbow input[type=range]::-webkit-slider-thumb {
+    background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%);
 }

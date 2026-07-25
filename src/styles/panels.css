@@ -1,0 +1,224 @@
+/* ==========================================================================
+   Floating Panels & Menus (Emotes, Settings, Mentions, etc.)
+   Standardized glass effect for all elements appearing ABOVE the chat list.
+   ========================================================================== */
+#kick-ext-chat-overlay [data-testid="pinned-message-modal"] .bg-surface-highest,
+#kick-ext-chat-overlay #chat-emotes-picker-panel .bg-surface-base,
+#kick-ext-chat-overlay #chat-settings-panel .bg-surface-base,
+#kick-ext-chat-overlay #chat-mention-panel .bg-surface-base,
+#kick-ext-chat-overlay #gift-shop-panel .bg-surface-base,
+#kick-ext-chat-overlay [data-testid="gift-shop-panel"],
+#kick-ext-chat-overlay [data-testid="gift-shop-panel"] .bg-surface-base,
+#kick-ext-chat-overlay #rewards-panel .bg-surface-base,
+#kick-ext-chat-overlay #chat-command-suggestion-panel .bg-surface-base,
+#kick-ext-chat-overlay #channel-chatroom button.bg-surface-base,
+#kick-ext-chat-overlay .seventv-emote-menu,
+#kick-ext-chat-overlay .seventv-autocomplete-list,
+#kick-ext-chat-overlay .kick-ext-7tv-autocomplete,
+body.ext-fullscreen-active .floating-container .seventv-emote-menu,
+body.ext-fullscreen-active .floating-container .seventv-autocomplete-list,
+body.ext-fullscreen-active .floating-container .kick-ext-7tv-autocomplete,
+#kick-ext-fs-profile-banner .bg-surface-highest {
+    /* Uses dynamic alpha calculated in transparency.js */
+    background-color: rgba(10, 10, 10, var(--kick-ext-panel-alpha)) !important;
+    background-image: none !important;
+
+    backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--kick-ext-blur)) !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Glass effect for 7TV elements inside overlay */
+#kick-ext-chat-overlay .seventv-emote-menu,
+#kick-ext-chat-overlay .seventv-autocomplete-list,
+#kick-ext-chat-overlay .kick-ext-7tv-autocomplete {
+    background-color: rgba(10, 10, 10, var(--kick-ext-panel-alpha)) !important;
+    backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 8px !important;
+}
+
+#kick-ext-chat-overlay .seventv-autocomplete-item {
+    padding: 4px 8px !important;
+    cursor: pointer !important;
+}
+
+#kick-ext-chat-overlay .seventv-autocomplete-item[selected="true"] {
+    background: rgba(83, 252, 24, 0.15) !important;
+}
+
+/* Position autocomplete above the input box inside overlay */
+#kick-ext-chat-overlay > .seventv-autocomplete-list,
+#kick-ext-chat-overlay > .kick-ext-7tv-autocomplete,
+#kick-ext-chat-overlay > .floating-container {
+    position: absolute !important;
+    bottom: 80px !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-height: 50vh !important;
+    z-index: 10000001 !important;
+}
+
+#kick-ext-chat-overlay .floating-container .seventv-autocomplete-list,
+#kick-ext-chat-overlay .floating-container .seventv-emote-menu {
+    width: 100% !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+}
+
+/* Position emote menu above the input box inside overlay */
+#kick-ext-chat-overlay > .seventv-emote-menu {
+    position: absolute !important;
+    bottom: 80px !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: auto !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    z-index: 10000001 !important;
+}
+
+body.ext-fullscreen-active .floating-container {
+    z-index: 100000000 !important;
+    pointer-events: auto !important;
+}
+
+/* #seventv-root inside fullscreen - ensure menus always render above chat overlay */
+:fullscreen #seventv-root,
+:-webkit-full-screen #seventv-root {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: visible !important;
+    z-index: 100000000 !important;
+    pointer-events: none !important;
+}
+
+:fullscreen #seventv-root .floating-container,
+:-webkit-full-screen #seventv-root .floating-container {
+    pointer-events: auto !important;
+    z-index: 100000000 !important;
+}
+
+/* ==========================================================================
+   7TV Emote Menu — Compact mode when overlay is short
+   --kick-ext-overlay-h is set on documentElement by JS (resizable.js / fullscreen.js)
+   so it cascades to both #kick-ext-chat-overlay and #seventv-root (siblings).
+   body.kick-ext-emote-compact is toggled by JS when overlay height < 360px.
+
+   Formula: menu height = overlay_height - 105px (input area ~90px + handle 12px + buffer)
+   This ensures the menu NEVER reaches the input toolbar / toggle button regardless of
+   where the overlay is positioned (including near the top of the screen where 7TV
+   would otherwise flip the menu downward and cover the button).
+   ========================================================================== */
+
+/* Always: menu height bounded to leave input area always accessible */
+:fullscreen #seventv-root .floating-container .seventv-emote-menu,
+:-webkit-full-screen #seventv-root .floating-container .seventv-emote-menu {
+    max-height: clamp(60px, calc(var(--kick-ext-overlay-h, 65vh) - 105px), 360px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Compact class kept for JS infrastructure but formula already scales — no separate override */
+
+/* Sticky header: provider tabs + search always pinned to top as emotes scroll underneath */
+:fullscreen #seventv-root .floating-container .seventv-emote-menu-header,
+:-webkit-full-screen #seventv-root .floating-container .seventv-emote-menu-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2 !important;
+    background: rgba(10, 10, 10, 0.97) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+}
+
+:fullscreen #seventv-tooltip-container,
+:-webkit-full-screen #seventv-tooltip-container {
+    z-index: 100000001 !important;
+}
+
+/* ==========================================================================
+   Global 7TV Emote Menu Elevation
+   Ensures 7TV menus render above Kick's input toolbar in all contexts
+   ========================================================================== */
+
+#kick-ext-chat-overlay .seventv-emote-menu,
+#kick-ext-chat-overlay .seventv-emote-menu-container,
+#kick-ext-chat-overlay .seventv-emote-menu-wrapper {
+    z-index: 10000000 !important;
+}
+
+/* Ensure 7TV menu is elevated even when injected into chat container */
+#kick-ext-chat-overlay #channel-chatroom .seventv-emote-menu,
+#kick-ext-chat-overlay .chat-input-container .seventv-emote-menu {
+    z-index: 10000000 !important;
+}
+
+/* Force toolbar to stay below emote menus (only inside overlay) */
+#kick-ext-chat-overlay .flex.items-center.justify-evenly.border-b-2.border-\[\#24272c\],
+#kick-ext-chat-overlay .flex.items-center.justify-evenly.border-b-2 {
+    z-index: 1 !important;
+    position: relative !important;
+}
+
+/* Ensure emote menu renders above toolbar buttons (only inside overlay) */
+#kick-ext-chat-overlay .seventv-emote-menu {
+    z-index: 99999999 !important;
+}
+
+/* ==========================================================================
+   Global Stacking & Z-Index Elevation for Tooltips and Portals
+   ==========================================================================
+   This ensures that all dynamic portals, tooltips, and floating menus (such as
+   Kick's native reply/role tooltips, 7TV tooltips, and Mo'Kick tooltips) are 
+   properly elevated above our chat overlay (which has z-index 9999999) when 
+   rendered dynamically as children of body or the fullscreen element.
+*/
+body.ext-fullscreen-active > [data-radix-portal],
+body.ext-fullscreen-active > [data-radix-popper-content-wrapper],
+body.ext-fullscreen-active > [role="tooltip"],
+body.ext-fullscreen-active > [class*="tooltip" i],
+body.ext-fullscreen-active > [class*="popper" i],
+body.ext-fullscreen-active > [class*="popover" i],
+body.ext-fullscreen-active > [class*="mokick" i],
+body.ext-fullscreen-active > [class*="mo-kick" i],
+body.ext-fullscreen-active > [id*="tooltip" i],
+body.ext-fullscreen-active > [id*="popover" i],
+body.ext-fullscreen-active > .tippy-popper,
+body.ext-fullscreen-active > .tippy-box,
+.ext-fullscreen-active [data-radix-portal],
+.ext-fullscreen-active [data-radix-popper-content-wrapper],
+.ext-fullscreen-active [role="tooltip"],
+.ext-fullscreen-active [class*="tooltip" i],
+.ext-fullscreen-active [class*="popper" i],
+.ext-fullscreen-active [class*="popover" i],
+.ext-fullscreen-active [class*="mokick" i],
+.ext-fullscreen-active [class*="mo-kick" i],
+.ext-fullscreen-active [id*="tooltip" i],
+.ext-fullscreen-active [id*="popover" i],
+.ext-fullscreen-active .tippy-popper,
+.ext-fullscreen-active .tippy-box,
+#kick-ext-chat-overlay ~ [data-radix-portal],
+#kick-ext-chat-overlay ~ [data-radix-popper-content-wrapper],
+#kick-ext-chat-overlay ~ [role="tooltip"],
+#kick-ext-chat-overlay ~ [class*="tooltip" i],
+#kick-ext-chat-overlay ~ [class*="popper" i],
+#kick-ext-chat-overlay ~ [class*="popover" i],
+#kick-ext-chat-overlay ~ [class*="mokick" i],
+#kick-ext-chat-overlay ~ [class*="mo-kick" i],
+#kick-ext-chat-overlay ~ [id*="tooltip" i],
+#kick-ext-chat-overlay ~ [id*="popover" i],
+#kick-ext-chat-overlay ~ .tippy-popper,
+#kick-ext-chat-overlay ~ .tippy-box {
+    z-index: 100000000 !important;
+}

@@ -1,11 +1,14 @@
 # Backups
 BACKUP*
+backup*
+*.zip
 _archive/
 archive/
 BEFORE_REVERT*
 src_backup*
 1.0/
 1.0new.zip
+temp_zip_check/
 
 # Logs and HTML backups
 Log/
@@ -16,3 +19,4 @@ HTMLkick/
 
 # Internal notes
 LessonsLearned/
+

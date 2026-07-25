@@ -19,6 +19,8 @@
         "src/utils/dom.js",
         "src/utils/observer.js",
         "src/utils/settings.js",
+        "src/features/quickClipboard.js",
+        "src/features/coopWindow.js",
         "src/features/layout.js",
         "src/features/transparency.js",
         "src/features/draggable.js",
@@ -27,10 +29,24 @@
         "src/features/chatSettingsInjector.js",
         "src/features/friendsHighlight.js",
         "src/features/mentionSound.js",
+        "src/features/theme.js",
         "src/content/content.js"
       ],
-      "css": ["src/styles/base.css"],
+      "css": [
+        "src/styles/base.css",
+        "src/styles/panels.css",
+        "src/styles/chat.css",
+        "src/styles/settings-panel.css",
+        "src/styles/fullscreen.css",
+        "src/styles/compat.css"
+      ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://kick.com/*"],
+      "js": ["src/content/earlyTheme.js"],
+      "css": ["src/styles/earlyTheme.css"],
+      "run_at": "document_start"
     },
     {
       "matches": ["https://kick.com/*"],
@@ -41,7 +57,18 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/styles/base.css"],
+      "resources": [
+        "src/styles/base.css",
+        "src/styles/panels.css",
+        "src/styles/chat.css",
+        "src/styles/settings-panel.css",
+        "src/styles/fullscreen.css",
+        "src/styles/compat.css",
+        "sounds/mention-ding.ogg",
+        "images/kick-logo-silver.png",
+        "images/kick-logo-burgundy.svg",
+        "images/kick-logo-rainbow.svg"
+      ],
       "matches": ["https://kick.com/*"]
     }
   ]

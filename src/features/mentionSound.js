@@ -19,52 +19,79 @@ const getAudioCtx = () => {
     return msAudioCtx;
 };
 
-const unlockAudio = async () => {
-    try {
-        const ctx = getAudioCtx();
-        if (ctx.state === 'suspended') {
-            await ctx.resume();
-        }
-        msAudioUnlocked = ctx.state === 'running';
-    } catch (e) {
-        console.warn('Kick Extension: AudioContext unlock failed', e);
-    }
-};
-
-const playSound = () => {
-    if (!msEnabled) return;
+const unlockAudio = () => {
     try {
         const ctx = getAudioCtx();
         if (ctx.state === 'suspended') {
             ctx.resume().then(() => {
                 msAudioUnlocked = ctx.state === 'running';
+                if (msAudioUnlocked) loadSoundBuffer();
             }).catch(() => {});
-            // If the browser still has audio locked, scheduling the oscillator now is wasted.
-            if (!msAudioUnlocked) return;
+        } else if (ctx.state === 'running') {
+            msAudioUnlocked = true;
+            loadSoundBuffer();
         }
+    } catch (e) {}
+};
 
-        const osc = ctx.createOscillator();
+let MS_TONE_DURATION = 0.705;   // fallback, přepíše se skutečnou délkou po dekódování
+const MS_MIN_GAP = 0.05;
+const MS_MAX_QUEUE_AHEAD = 3.0;
+const MS_SOUND_GAIN = 0.5;        // uprav podle hlasitosti souboru, 0.3-0.6 je rozumný start
+
+let msNextAvailableTime = 0;
+
+let msSoundBuffer = null;
+let msSoundLoadPromise = null;
+
+const loadSoundBuffer = () => {
+    if (msSoundBuffer) return Promise.resolve(msSoundBuffer);
+    if (msSoundLoadPromise) return msSoundLoadPromise;
+
+    msSoundLoadPromise = fetch(chrome.runtime.getURL('sounds/mention-ding.ogg'))
+        .then((res) => res.arrayBuffer())
+        .then((arrayBuffer) => getAudioCtx().decodeAudioData(arrayBuffer))
+        .then((decoded) => {
+            msSoundBuffer = decoded;
+            MS_TONE_DURATION = decoded.duration;
+            return decoded;
+        })
+        .catch((e) => {
+            console.warn('Kick Extension: failed to load mention sound', e);
+            msSoundLoadPromise = null;
+            return null;
+        });
+
+    return msSoundLoadPromise;
+};
+
+const playSound = () => {
+    if (!msEnabled || !msAudioUnlocked) return;
+    if (!msSoundBuffer) { loadSoundBuffer(); return; } // ještě nenačteno, tenhle ding přeskoč
+    try {
+        const ctx = getAudioCtx();
+        if (ctx.state !== 'running') return; // AudioContext is suspended (waiting for user interaction on page)
+
+        const now = ctx.currentTime;
+        const startAt = Math.max(now, msNextAvailableTime);
+        if (startAt - now > MS_MAX_QUEUE_AHEAD) return;
+
+        const source = ctx.createBufferSource();
         const gain = ctx.createGain();
+        source.buffer = msSoundBuffer;
+        gain.gain.setValueAtTime(MS_SOUND_GAIN, startAt);
 
-        osc.connect(gain);
+        source.connect(gain);
         gain.connect(ctx.destination);
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+        source.start(startAt);
+        source.onended = () => { source.disconnect(); gain.disconnect(); };
 
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.2);
-    } catch(e) {
+        msNextAvailableTime = startAt + MS_TONE_DURATION + MS_MIN_GAP;
+    } catch (e) {
         console.warn('Kick Extension: AudioContext error', e);
     }
 };
-
-let lastSoundTime = 0;
 
 // Persistent set of message identities that already triggered or were intentionally suppressed.
 // Stored in memory so it survives fullscreen DOM teardown/rebuild and chat panel hide/show.
@@ -215,7 +242,13 @@ const collectChatRows = (node) => {
 
 let msLastScrollTime = 0;
 let msWasAtBottom = true;
+let msLastAtBottomTime = Date.now();
 const MS_SCROLL_QUIET_MS = 700;
+
+// Grace period: if the user was at the bottom within this window, treat new
+// messages as live even if auto-scroll hasn't caught up yet. This prevents
+// mentions from being permanently suppressed during heavy chat bursts.
+const MS_BOTTOM_GRACE_MS = 2000;
 const MS_ROW_SETTLE_MS = 80;
 const MS_MAX_ROW_RETRIES = 5;
 
@@ -249,6 +282,11 @@ const computeAtBottom = () => {
 const updateScrollState = () => {
     msLastScrollTime = Date.now();
     msWasAtBottom = computeAtBottom();
+    if (msWasAtBottom) msLastAtBottomTime = Date.now();
+};
+
+const wasRecentlyAtBottom = () => {
+    return msWasAtBottom || (Date.now() - msLastAtBottomTime) < MS_BOTTOM_GRACE_MS;
 };
 
 const getSuppressReason = (meta) => {
@@ -336,9 +374,8 @@ function flushPendingRows() {
         if (evaluateRow(row, meta)) shouldPlay = true;
     }
 
-    if (shouldPlay && (Date.now() - lastSoundTime > 300)) {
+    if (shouldPlay) {
         playSound();
-        lastSoundTime = Date.now();
     }
 }
 
@@ -384,12 +421,13 @@ const msStartObserver = () => {
 
             if (allRows.size === 0) return;
 
-            const largeHistoryBatch = allRows.size > 12 && !msWasAtBottom;
-            const forceSuppress = !msWasAtBottom ? 'not-at-bottom' : (largeHistoryBatch ? 'history-batch' : null);
+            const effectivelyAtBottom = wasRecentlyAtBottom();
+            const largeHistoryBatch = allRows.size > 12 && !effectivelyAtBottom;
+            const forceSuppress = !effectivelyAtBottom ? 'not-at-bottom' : (largeHistoryBatch ? 'history-batch' : null);
 
             for (const row of allRows) {
                 queueRow(row, {
-                    wasAtBottom: msWasAtBottom,
+                    wasAtBottom: effectivelyAtBottom,
                     forceSuppress,
                     // Attribute-only mention updates are usually the final piece, so one retry is enough.
                     retries: sawClassChange ? 1 : 0,
@@ -440,8 +478,9 @@ const updateObserverState = () => {
 };
 
 const init = async () => {
-    document.addEventListener('pointerdown', unlockAudio, { capture: true, passive: true });
+    document.addEventListener('pointerup', unlockAudio, { capture: true, passive: true });
     document.addEventListener('keydown', unlockAudio, { capture: true, passive: true });
+    document.addEventListener('click', unlockAudio, { capture: true, passive: true });
 
     try {
         const result = await chrome.storage.local.get({ [MS_STORAGE_KEY]: false });
@@ -454,22 +493,14 @@ const init = async () => {
 
     chrome.runtime.onMessage.addListener((message) => {
         if (message.action === 'updateSetting' && message.key === MS_STORAGE_KEY) {
-            const oldVal = msEnabled;
             msEnabled = message.value;
-            if (msEnabled && !oldVal) {
-                unlockAudio();
-            }
             updateObserverState();
         }
     });
 
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area === 'local' && changes[MS_STORAGE_KEY]) {
-            const oldVal = msEnabled;
             msEnabled = changes[MS_STORAGE_KEY].newValue;
-            if (msEnabled && !oldVal) {
-                unlockAudio();
-            }
             updateObserverState();
         }
     });
@@ -506,8 +537,8 @@ const scheduleObserverRestart = (force = false) => {
 };
 
 try {
-    if (window.KickExt.createObserver) {
-        window.KickExt.createObserver(document.body, () => scheduleObserverRestart(false), { childList: true, subtree: true });
+    if (window.KickExt.sharedBodyObserver) {
+        window.KickExt.sharedBodyObserver.subscribe(() => scheduleObserverRestart(false));
     }
 } catch (e) {
     console.warn('Kick Extension [mentionSound]: failed to hook observer re-attachment', e);

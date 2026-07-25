@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Extension Settings Panel — injected into Kick's #chat-settings-panel
+   Designed to match Kick's native dark panel aesthetic.
+   ========================================================================== */
+
+/* Section header label (e.g. "Chat Overlay", "Layout") */
+.kick-ext-sp-section-title {
+  padding: 10px 10px 4px;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255, 255, 255, 0.38) !important;
+  user-select: none;
+}
+
+/* Generic setting row container */
+.kick-ext-sp-item {
+  padding: 4px 10px;
+}
+
+/* Horizontal row (label + control side by side) */
+.kick-ext-sp-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 40px !important;
+  padding: 0 10px !important;
+  border-radius: 4px !important;
+  transition: background 0.15s ease !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: white !important;
+  cursor: default;
+}
+
+.kick-ext-sp-row:hover {
+  background: rgba(42, 45, 50, 0.8) !important;
+}
+
+/* Label row for vertical controls (opacity) */
+.kick-ext-sp-label {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: white !important;
+  margin-bottom: 8px !important;
+}
+
+/* Opacity Slider */
+.kick-ext-sp-slider {
+  width: 100% !important;
+  height: 4px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-radius: 2px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  display: block !important;
+}
+
+.kick-ext-sp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: #53fc18 !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: transform 0.1s ease !important;
+  box-shadow: 0 0 6px rgba(83, 252, 24, 0.5) !important;
+}
+
+.kick-ext-sp-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.25) !important;
+}
+
+/* Chat Position Buttons */
+.kick-ext-sp-btn-group {
+  display: flex !important;
+  gap: 4px !important;
+}
+
+.kick-ext-sp-btn {
+  padding: 3px 14px !important;
+  border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  cursor: pointer !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s !important;
+  line-height: 1 !important;
+}
+
+.kick-ext-sp-btn:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: white !important;
+}
+
+.kick-ext-sp-btn.active {
+  background: #53fc18 !important;
+  color: #000 !important;
+  border-color: transparent !important;
+}
+
+.kick-ext-sp-btn-group.full-width-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 4px !important;
+  width: 100% !important;
+}
+
+.kick-ext-sp-btn-group.full-width-grid .kick-ext-sp-btn {
+  padding: 6px 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  width: 100% !important;
+  font-size: 11px !important;
+}
+
+/* Toggle Switch */
+.kick-ext-sp-switch {
+  position: relative !important;
+  display: inline-block !important;
+  width: 38px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+
+.kick-ext-sp-switch input {
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+}
+
+.kick-ext-sp-knob {
+  position: absolute !important;
+  inset: 0 !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 22px !important;
+  transition: background 0.2s !important;
+}
+
+.kick-ext-sp-knob::before {
+  content: '' !important;
+  position: absolute !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: white !important;
+  border-radius: 50% !important;
+  top: 3px !important;
+  left: 3px !important;
+  transition: transform 0.2s !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+}
+
+.kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
+  background: #53fc18 !important;
+}
+
+.kick-ext-sp-switch input:checked + .kick-ext-sp-knob::before {
+  transform: translateX(16px) !important;
+}
+
+/* --- In-Chat Settings Controls Theme Adaptations --- */
+body.kick-ext-theme-silver .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
+  background: #cbd5e1 !important;
+}
+body.kick-ext-theme-silver .kick-ext-sp-slider::-webkit-slider-thumb {
+  background: #cbd5e1 !important;
+  box-shadow: 0 0 6px rgba(203, 213, 225, 0.5) !important;
+}
+
+body.kick-ext-theme-burgundy .kick-ext-sp-btn.active {
+  background: #e11d48 !important;
+  color: #0f172a !important;
+}
+body.kick-ext-theme-burgundy .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
+  background: #e11d48 !important;
+}
+body.kick-ext-theme-burgundy .kick-ext-sp-slider::-webkit-slider-thumb {
+  background: #e11d48 !important;
+  box-shadow: 0 0 6px rgba(225, 29, 72, 0.5) !important;
+}
+
+body.kick-ext-theme-rainbow .kick-ext-sp-btn.active {
+  background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%) !important;
+  color: #0f172a !important;
+}
+body.kick-ext-theme-rainbow .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
+  background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%) !important;
+}
+body.kick-ext-theme-rainbow .kick-ext-sp-slider::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%) !important;
+  box-shadow: 0 0 6px rgba(0, 230, 118, 0.5) !important;
+}
+
+/* Reset Button */
+.kick-ext-sp-reset-btn {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s !important;
+  text-align: center !important;
+}
+
+.kick-ext-sp-reset-btn:hover {
+  background: rgba(255, 80, 80, 0.18) !important;
+  color: #ff7070 !important;
+  border-color: rgba(255, 80, 80, 0.3) !important;
+}
+
+/* Back Button in Kick panel header */
+#kick-ext-sp-back {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+  transition: background 0.15s !important;
+  flex-shrink: 0 !important;
+}
+
+#kick-ext-sp-back:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+#kick-ext-sp-back svg {
+  display: block !important;
+}
+
+/* Injected Settings Shortcuts Guide */
+.kick-ext-sp-shortcuts {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin: 4px 10px 10px !important;
+}
+
+.kick-ext-sp-shortcut-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 11px !important;
+}
+
+.kick-ext-sp-shortcut-key {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #53fc18 !important; /* Kick Green */
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-family: monospace !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+}
+
+.kick-ext-sp-shortcut-desc {
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-weight: 500 !important;
+}
+
+/* Custom Extension Settings Panel (.kick-ext-sp-*) - Silver Theme Overrides */
+body.kick-ext-theme-silver .kick-ext-sp-slider::-webkit-slider-thumb {
+    background: #cbd5e1 !important;
+    box-shadow: 0 0 6px rgba(203, 213, 225, 0.5) !important;
+}
+
+body.kick-ext-theme-silver .kick-ext-sp-btn.active {
+    background: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.kick-ext-theme-silver .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
+    background: #cbd5e1 !important;
+}
+
+body.kick-ext-theme-silver .kick-ext-sp-shortcut-key {
+    color: #cbd5e1 !important;
+}

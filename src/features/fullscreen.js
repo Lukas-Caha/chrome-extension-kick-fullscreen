@@ -84,6 +84,9 @@ const enterFullscreenChat = async () => {
   }
 
   if (chat.parentNode !== overlay) {
+    // Tag before moving so bridge.js knows this specific node was relocated
+    // and needs the removeChild/insertBefore safety net (see bridge.js).
+    chat.setAttribute('data-ke-portaled', 'true');
     overlay.appendChild(chat);
   }
 
@@ -149,7 +152,7 @@ const adjustOverlayOpacity = async (delta) => {
   if (window.KickExt.transparency) {
     await window.KickExt.transparency.setChatTransparency(opacity);
   }
-  
+
   // Update UI components in the injected settings panel if currently open
   const slider = document.getElementById('kick-ext-sp-opacity');
   const opacityVal = document.getElementById('kick-ext-sp-opacity-val');
@@ -158,7 +161,11 @@ const adjustOverlayOpacity = async (delta) => {
 };
 
 // Keyboard shortcuts (Alt+F, Alt+G, Alt++, Alt+-)
-document.addEventListener('keydown', async (e) => {
+document.addEventListener('keydown', async function keyHandler(e) {
+  if (typeof chrome !== 'undefined' && !chrome.runtime?.id) {
+    document.removeEventListener('keydown', keyHandler);
+    return;
+  }
   const isBrowserFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
 
   // 1. Alt+F: Toggle Fullscreen Chat option (applies immediately if in browser fullscreen)
@@ -167,13 +174,13 @@ document.addEventListener('keydown', async (e) => {
     const settings = await window.KickExt.settings.getAllSettings();
     const newEnableVal = !settings.enableFullscreenChat;
     await window.KickExt.settings.saveSetting('enableFullscreenChat', newEnableVal);
-    
+
     // Update checkbox in Kick settings panel if visible
     const cb = document.getElementById('kick-ext-sp-enable-fs-chat');
     if (cb) cb.checked = newEnableVal;
-    
+
     console.log(`Kick Extension: Fullscreen Chat ${newEnableVal ? 'ENABLED' : 'DISABLED'} via Alt+F`);
-    
+
     if (isBrowserFS) {
       if (newEnableVal) {
         enterFullscreenChat();
@@ -197,7 +204,7 @@ document.addEventListener('keydown', async (e) => {
         activeEl.isContentEditable ||
         activeEl.getAttribute('role') === 'button'
       );
-      
+
       if (!isInteractive) {
         e.preventDefault();
         const input = getChatInput();
@@ -212,7 +219,7 @@ document.addEventListener('keydown', async (e) => {
       e.preventDefault();
       toggleGhostMode();
     }
-    
+
     // 3. Alt++ and Alt+-: Adjust Opacity
     if (e.altKey) {
       if (e.key === '+' || e.key === '=' || e.code === 'Equal' || e.code === 'NumpadAdd') {
@@ -231,11 +238,10 @@ document.addEventListener('keydown', async (e) => {
  * Exits fullscreen chat mode
  */
 const exitFullscreenChat = () => {
-
-  if (!isFullscreen) return;
+  const overlay = document.getElementById(OVERLAY_ID);
+  if (!isFullscreen && !overlay) return;
 
   const chat = document.querySelector('#channel-chatroom');
-  const overlay = document.getElementById(OVERLAY_ID);
 
   isFullscreen = false;
 
@@ -251,6 +257,7 @@ const exitFullscreenChat = () => {
   if (seventvRoot && seventvRoot.parentNode !== document.body) {
     document.body.appendChild(seventvRoot);
   }
+  if (seventvRoot) seventvRoot.removeAttribute('data-ke-portaled');
 
   // Restore 7TV tooltip container to document.body.
   // Reset its left/top to off-screen so stale fullscreen coordinates are never visible.
@@ -263,10 +270,12 @@ const exitFullscreenChat = () => {
     if (tooltip.parentNode !== document.body) {
       document.body.appendChild(tooltip);
     }
+    tooltip.removeAttribute('data-ke-portaled');
   }
 
   if (chat && placeholder && placeholder.parentNode) {
     placeholder.parentNode.insertBefore(chat, placeholder);
+    chat.removeAttribute('data-ke-portaled');
     placeholder.remove();
   }
 
@@ -320,20 +329,20 @@ const exitFullscreenChat = () => {
 /**
  * Automatically watch for browser fullscreen changes
  */
-document.addEventListener('fullscreenchange', () => {
-  if (document.fullscreenElement) {
+const handleFullscreenChange = () => {
+  if (typeof chrome !== 'undefined' && !chrome.runtime?.id) {
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return;
+  }
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
     enterFullscreenChat();
   } else {
     exitFullscreenChat();
   }
-});
-document.addEventListener('webkitfullscreenchange', () => {
-  if (document.webkitFullscreenElement) {
-    enterFullscreenChat();
-  } else {
-    exitFullscreenChat();
-  }
-});
+};
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
 const getChatInput = () => {
   return document.querySelector('#channel-chatroom textarea') ||
@@ -352,11 +361,13 @@ const moveSevenTVRootToFullscreen = () => {
 
   const seventvRoot = document.getElementById('seventv-root');
   if (seventvRoot && seventvRoot.parentNode !== fullscreenContainer) {
+    seventvRoot.setAttribute('data-ke-portaled', 'true');
     fullscreenContainer.appendChild(seventvRoot);
   }
 
   const tooltip = document.getElementById('seventv-tooltip-container');
   if (tooltip && tooltip.parentNode !== fullscreenContainer) {
+    tooltip.setAttribute('data-ke-portaled', 'true');
     fullscreenContainer.appendChild(tooltip);
   }
 };
@@ -379,7 +390,7 @@ const setupInputMonitor = () => {
 
   input.addEventListener('input', scheduleInputCheck);
   input.addEventListener('keyup', scheduleInputCheck);
-  
+
   // Enter to unfocus when empty in fullscreen
   input.addEventListener('keydown', (e) => {
     if (isFullscreen && e.key === 'Enter' && !e.shiftKey) {
@@ -389,8 +400,8 @@ const setupInputMonitor = () => {
       } else {
         const hasText = input.textContent.trim() !== '';
         // Prohlížeče jako Kick používají div/p tagy i když jsou prázdné. Hledáme reálný obsah (obrázky/emoty).
-        const hasEmotes = input.querySelector('img') !== null || 
-          Array.from(input.querySelectorAll('*')).some(el => 
+        const hasEmotes = input.querySelector('img') !== null ||
+          Array.from(input.querySelectorAll('*')).some(el =>
             typeof el.className === 'string' && el.className.toLowerCase().includes('emote')
           );
         isEmpty = !hasText && !hasEmotes;
@@ -455,11 +466,11 @@ const syncModActionsDisplay = () => {
   if (!isFullscreen || !placeholder || !placeholder.parentElement) return;
   const overlay = document.getElementById(OVERLAY_ID);
   if (!overlay) return;
-  
+
   // Kick sets the CSS variable on the wrapper element. We need to mirror it to the overlay.
   const computed = window.getComputedStyle(placeholder.parentElement);
   const modDisplay = computed.getPropertyValue('--chatroom-mod-actions-display');
-  
+
   if (modDisplay && modDisplay.trim() !== '') {
     overlay.style.setProperty('--chatroom-mod-actions-display', modDisplay.trim());
   } else {
@@ -470,7 +481,7 @@ const syncModActionsDisplay = () => {
 const watchModActions = () => {
   if (modActionsObserver) { modActionsObserver.disconnect(); modActionsObserver = null; }
   if (!isFullscreen || !placeholder || !placeholder.parentElement) return;
-  
+
   // Sync once immediately on enter
   syncModActionsDisplay();
 
@@ -576,6 +587,8 @@ const PROFILE_BANNER_GAP = 12;
 const isProfileCard = (el) => {
   if (!el || el.nodeType !== 1) return false;
   if (!el.classList?.contains('bg-surface-highest')) return false;
+  // Exclude pinned messages — they share bg-surface-highest, a kick.com link, and img[alt] (emotes)
+  if (el.querySelector('[data-testid="pinned-message-content"]')) return false;
   // Profile link to kick.com/username
   const link = el.querySelector('a[href*="kick.com/"]');
   if (!link) return false;
@@ -743,7 +756,7 @@ const relocateProfileBanner = (cardEl) => {
   // Find the topmost movable container (#user-identity → Radix portal → cursor-auto wrapper)
   let toMove = cardEl;
   const userIdentity = cardEl.closest('#user-identity');
-  
+
   if (userIdentity) {
     toMove = userIdentity;
   } else {
@@ -771,6 +784,7 @@ const relocateProfileBanner = (cardEl) => {
   wrapper.id = 'kick-ext-fs-profile-banner';
 
   wrapper.appendChild(toMove);
+  toMove.setAttribute('data-ke-portaled', 'true');
   fsContainer.appendChild(wrapper);
 
   // --- Custom Fullscreen Drag Logic ---
@@ -785,7 +799,7 @@ const relocateProfileBanner = (cardEl) => {
     const target = e.target;
     // Allow clicking buttons, links, scrollbars, etc.
     if (target.closest('button, a, input, [role="button"], .scrollbar-hide')) return;
-    
+
     // Stop React from seeing this pointerdown so its native drag logic doesn't fire
     // This prevents React state corruption that breaks normal mode dragging.
     e.preventDefault();
@@ -827,7 +841,7 @@ const relocateProfileBanner = (cardEl) => {
     if (!activeProfileBanner) return;
     const btn = e.target.closest('button, a');
     if (!btn) return;
-    
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -893,6 +907,7 @@ const cleanupProfileBanner = () => {
       } else {
         origParent.appendChild(movedElement);
       }
+      movedElement.removeAttribute('data-ke-portaled');
     } catch (_) { /* element may already be unmounted */ }
     finally {
       setTimeout(() => { isRestoringBanner = false; }, 0);
