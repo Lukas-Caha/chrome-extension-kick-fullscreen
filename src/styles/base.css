@@ -46,7 +46,7 @@ body.ext-chat-left #channel-chatroom {
 .kick-ext-friend-msg.border-green-500,
 .kick-ext-friend-msg[class*="border-green-"] {
     border-style: solid !important;
-    border-color: #cbd5e1 !important;
+    border-color: #53fc18 !important;
     border-width: 1px !important;
 }
 
@@ -70,111 +70,136 @@ body.ext-chat-left #channel-chatroom {
     display: flex !important;
     flex-direction: column !important;
     pointer-events: auto !important;
-    background-color: rgba(10, 10, 10, var(--kick-ext-bg-alpha)) !important;
+    /* Background moved to ::before to fix Firefox nested backdrop-filter bug */
+    background-color: transparent !important;
     border-radius: 8px !important;
     overflow: hidden !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    /* Border removed per user request (was too bright) */
+}
+
+#kick-ext-chat-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: rgba(10, 10, 10, var(--kick-ext-bg-alpha)) !important;
+    border-radius: inherit;
+    pointer-events: none;
+    transition: background 0.2s ease;
+}
+
+/* Blur active: only applied by JS when blur > 0 so no compositing layer is created at blur=0 */
+#kick-ext-chat-overlay.kick-ext-blur-active::before {
     backdrop-filter: blur(var(--kick-ext-blur)) !important;
     -webkit-backdrop-filter: blur(var(--kick-ext-blur)) !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-    transition: background 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Firefox canvas blur: tie visibility to overlay transparency.
+   z-index:-1 puts the canvas above the parent's background in the stacking
+   context, so without this rule the blurred video would always cover the dark
+   background regardless of the user's opacity slider.
+   alpha=1 (opaque)      → canvas invisible → solid dark overlay
+   alpha=0 (transparent) → canvas visible    → blurred video shows through */
+#kick-ext-blur-canvas {
+    opacity: calc(1 - var(--kick-ext-bg-alpha, 1)) !important;
 }
 
 /* Drag Handle */
 #kick-ext-chat-handle {
-    height: 12px !important;
-    background: rgba(40, 40, 40, 0.9) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    user-select: none !important;
-    flex-shrink: 0 !important;
+    height: 12px;
+    background: rgba(40, 40, 40, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    user-select: none;
+    flex-shrink: 0;
 
 }
 
 #kick-ext-chat-handle:hover {
-    background: rgba(83, 252, 24, 0.4) !important; /* Kick Green on hover */
+    background: rgba(83, 252, 24, 0.4); /* Kick Green on hover */
 }
 
 .handle-icon {
-    width: 30px !important;
-    height: 4px !important;
-    background: rgba(255, 255, 255, 0.3) !important;
-    border-radius: 2px !important;
+    width: 30px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
 }
 
 #kick-ext-chat-handle:hover .handle-icon {
-    background: rgba(255, 255, 255, 0.8) !important;
+    background: rgba(255, 255, 255, 0.8);
 }
 
 /* Dragging state */
 .is-dragging {
-    opacity: 0.8 !important;
-    cursor: grabbing !important;
+    opacity: 0.8;
+    cursor: grabbing;
 }
 
 /* Resize Handle - Bottom Edge (Height only) */
 #kick-ext-chat-resize-handle {
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 20px !important; /* Offset to not overlap corner */
-    right: 0 !important;
-    height: 8px !important;
-    background: rgba(40, 40, 40, 0.5) !important;
-    cursor: ns-resize !important;
-    z-index: 10000000 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    position: absolute;
+    bottom: 0;
+    left: 20px; /* Offset to not overlap corner */
+    right: 0;
+    height: 8px;
+    background: rgba(40, 40, 40, 0.5);
+    cursor: ns-resize;
+    z-index: 10000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 #kick-ext-chat-resize-handle::after {
-    content: '' !important;
-    width: 30px !important;
-    height: 2px !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-    border-radius: 2px !important;
+    content: '';
+    width: 30px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
 }
 
 #kick-ext-chat-resize-handle:hover::after {
-    background: #53fc18 !important; /* Kick Green */
+    background: #53fc18; /* Kick Green */
 }
 
 /* Resize Handle - Bottom Left Corner (Width + Height) */
 #kick-ext-chat-corner-handle {
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 20px !important;
-    height: 20px !important;
-    cursor: nesw-resize !important;
-    z-index: 10000001 !important;
-    background: transparent !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nesw-resize;
+    z-index: 10000001;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #kick-ext-chat-corner-handle::after {
-    content: '' !important;
-    width: 8px !important;
-    height: 8px !important;
-    border-left: 2px solid rgba(255, 255, 255, 0.4) !important;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.4) !important;
-    transition: border-color 0.2s ease !important;
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-left: 2px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+    transition: border-color 0.2s ease;
 }
 
 #kick-ext-chat-corner-handle:hover::after {
-    border-left-color: #53fc18 !important; /* Kick Green */
-    border-bottom-color: #53fc18 !important; /* Kick Green */
+    border-left-color: #53fc18; /* Kick Green */
+    border-bottom-color: #53fc18; /* Kick Green */
 }
 
 .is-resizing {
-    border-left: 2px solid #53fc18 !important;
-    border-bottom: 2px solid #53fc18 !important;
+    border-left: 2px solid #53fc18;
+    border-bottom: 2px solid #53fc18;
 }
 
 /* Fix chat container to fill the overlay properly without cutting off the bottom */
@@ -188,6 +213,7 @@ body.ext-chat-left #channel-chatroom {
     order: unset !important;
     display: flex !important;
     flex-direction: column !important;
+    overflow-x: hidden !important;
 }
 
 /* Ensure the scrollable message area takes up the free space */
@@ -195,12 +221,14 @@ body.ext-chat-left #channel-chatroom {
 #kick-ext-chat-overlay [id^="chat-container"] {
     flex: 1 1 0% !important;
     min-height: 0 !important;
+    overflow-x: hidden !important;
 }
 
 /* Ensure input area doesn't shrink */
 #kick-ext-chat-overlay .chat-input-container,
 #kick-ext-chat-overlay .relative.flex.w-full.flex-col.p-4 {
     flex-shrink: 0 !important;
+    overflow-x: hidden !important;
 }
 
 /* Override Kick's internal background colors when in the overlay */
@@ -231,15 +259,14 @@ body.ext-chat-left #channel-chatroom {
     background-color: transparent !important;
 }
 
-@keyframes kickExtHidePanel {
-    0% { opacity: 1; }
-    99% { opacity: 1; }
-    100% { opacity: 0; }
-}
-
 #kick-ext-chat-overlay .bg-surface-base[style*="max-height: 0"] {
-    animation: kickExtHidePanel 350ms forwards !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: transparent !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
     pointer-events: none !important;
+    transition: max-height 150ms ease-out, opacity 150ms ease-out, background-color 150ms ease-out, visibility 150ms !important;
 }
 
 /* Ensure sidebar Home button is ALWAYS white in all themes and states */
@@ -254,39 +281,4 @@ body.ext-chat-left #channel-chatroom {
     fill: #ffffff !important;
 }
 
-/* Rainbow Theme Mention Corner Highlight Rules (Animated Color Cycling) */
-body.kick-ext-theme-rainbow [class*="border-green"],
-body.kick-ext-theme-rainbow [class*="border-l-green"],
-body.kick-ext-theme-rainbow [class*="border-l-brand"],
-body.kick-ext-theme-rainbow [class*="border-l-primary"],
-body.kick-ext-theme-rainbow .border-green-500,
-body.kick-ext-theme-rainbow .border-l-2,
-body.kick-ext-theme-rainbow .border-l-4,
-body.kick-ext-theme-rainbow #channel-chatroom [class*="border-green"],
-body.kick-ext-theme-rainbow #kick-ext-chat-overlay [class*="border-green"] {
-    animation: ke-rainbow-border 4s linear infinite !important;
-}
 
-/* Chat Command Suggestion Panel & Command Input Badges Theme Rules */
-body.kick-ext-theme-burgundy #chat-command-suggestion-panel [style*="color"],
-body.kick-ext-theme-burgundy #chat-input-wrapper [class*="text-green"],
-body.kick-ext-theme-burgundy #chat-input-wrapper [class*="text-brand"] {
-    color: #e11d48 !important;
-}
-body.kick-ext-theme-burgundy #chat-input-wrapper [class*="border-green"],
-body.kick-ext-theme-burgundy #chat-input-wrapper [class*="border-brand"] {
-    border-color: #e11d48 !important;
-}
-
-body.kick-ext-theme-rainbow #chat-command-suggestion-panel [style*="color"],
-body.kick-ext-theme-rainbow #chat-input-wrapper [class*="text-green"],
-body.kick-ext-theme-rainbow #chat-input-wrapper [class*="text-brand"] {
-    background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    color: transparent !important;
-}
-body.kick-ext-theme-rainbow #chat-input-wrapper [class*="border-green"],
-body.kick-ext-theme-rainbow #chat-input-wrapper [class*="border-brand"] {
-    border-color: #00e676 !important;
-}

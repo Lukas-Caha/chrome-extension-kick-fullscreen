@@ -106,61 +106,74 @@ const initChatDetection = async () => {
   });
 
   /**
+   * Applies setting update to live DOM / extension features.
+   */
+  const applySettingUpdate = (key, value) => {
+    if (key === 'opacity') {
+      window.KickExt.transparency.setChatTransparency(value);
+    } else if (key === 'chatHeight') {
+      const overlay = document.getElementById('kick-ext-chat-overlay');
+      if (overlay) overlay.style.height = typeof value === 'number' ? `${value}px` : value;
+    } else if (key === 'chatSide') {
+      if (value === 'left') window.KickExt.layout.moveChatLeft();
+      else window.KickExt.layout.moveChatRight();
+    } else if (key === 'hideLeaderboard') {
+      document.body.classList.toggle('kick-ext-hide-leaderboard', value);
+    } else if (key === 'hideModerationBar') {
+      document.body.classList.toggle('kick-ext-hide-mod-bar', value);
+    } else if (key === 'hideUserInfo') {
+      document.body.classList.toggle('kick-ext-hide-user-info', value);
+    } else if (key === 'hideFullscreenChatHeader') {
+      if (window.KickExt.fullscreen.isActive()) {
+        window.KickExt.fullscreen.applyFullscreenChatHeader(value);
+      }
+    } else if (key === 'enableFullscreenChat') {
+      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (value) {
+        if (isFS && !window.KickExt.fullscreen.isActive()) {
+          window.KickExt.fullscreen.enterFullscreenChat();
+        }
+      } else {
+        if (window.KickExt.fullscreen.isActive()) {
+          window.KickExt.fullscreen.exitFullscreenChat();
+        }
+      }
+    } else if (key === 'blurLevel') {
+      const overlay = document.getElementById('kick-ext-chat-overlay');
+      const video   = document.querySelector('video');
+      const numericValue = value === '0' ? 0 : Number(value);
+      const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
+      if (overlay && video && window.KickExt.blurEngine) {
+        window.KickExt.blurEngine.setBlur(overlay, video, safeValue);
+      } else {
+        // Fallback: overlay not present yet (not in fullscreen), just set the CSS variable.
+        document.documentElement.style.setProperty('--kick-ext-blur', safeValue === 0 ? '0px' : `${safeValue}px`);
+      }
+    } else if (key === 'extraSmallFullscreenFont') {
+      if (window.KickExt.fullscreen?.applyFontScale) {
+        window.KickExt.fullscreen.applyFontScale(value);
+      }
+    }
+  };
+
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'KICK_EXT_UPDATE_SETTING') {
+      applySettingUpdate(e.data.key, e.data.value);
+    }
+  });
+
+  /**
    * Browser Action (Popup) Listener
    * Handles real-time settings updates from the extension popup.
    */
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'updateSetting') {
-      const { key, value } = message;
-
-      if (key === 'opacity') {
-        window.KickExt.transparency.setChatTransparency(value);
-      } else if (key === 'chatHeight') {
-        const overlay = document.getElementById('kick-ext-chat-overlay');
-        if (overlay) overlay.style.height = value;
-      } else if (key === 'chatSide') {
-        if (value === 'left') window.KickExt.layout.moveChatLeft();
-        else window.KickExt.layout.moveChatRight();
-      } else if (key === 'hideLeaderboard') {
-        // This is handled by CSS classes on the body usually, or direct DOM manipulation
-        document.body.classList.toggle('kick-ext-hide-leaderboard', value);
-      } else if (key === 'hideModerationBar') {
-        document.body.classList.toggle('kick-ext-hide-mod-bar', value);
-      } else if (key === 'hideUserInfo') {
-        document.body.classList.toggle('kick-ext-hide-user-info', value);
-      } else if (key === 'hideFullscreenChatHeader') {
-        if (window.KickExt.fullscreen.isActive()) {
-          window.KickExt.fullscreen.applyFullscreenChatHeader();
-        }
-      } else if (key === 'enableFullscreenChat') {
-        const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        if (value) {
-          if (isFS && !window.KickExt.fullscreen.isActive()) {
-            window.KickExt.fullscreen.enterFullscreenChat();
-          }
-        } else {
-          if (window.KickExt.fullscreen.isActive()) {
-            window.KickExt.fullscreen.exitFullscreenChat();
-          }
-        }
-      } else if (key === 'blurLevel') {
-        document.documentElement.style.setProperty('--kick-ext-blur', value === '0' ? '0px' : `${value}px`);
-      } else if (key === 'extraSmallFullscreenFont') {
-        if (window.KickExt.fullscreen?.applyFontScale) {
-          window.KickExt.fullscreen.applyFontScale(value);
-        }
-      } else if (key === 'theme') {
-        if (window.KickExt.theme) {
-          window.KickExt.theme.setTheme(value);
-        }
-        // Mirror theme to localStorage so earlyTheme.js can read it
-        // synchronously on next page load (FOWT prevention).
-        try {
-          localStorage.setItem('kick-ext-theme', value);
-        } catch (e) { /* localStorage unavailable — non-critical */ }
+      applySettingUpdate(message.key, message.value);
+    } else if (message.action === 'openInPageSettingsModal') {
+      if (window.KickExt.inPageSettingsModal) {
+        window.KickExt.inPageSettingsModal.show();
       }
     } else if (message.action === 'resetPosition') {
-      // Trigger the existing reset logic
       window.dispatchEvent(new CustomEvent('KickExt:resetPosition'));
     }
   });
@@ -174,7 +187,8 @@ const initChatDetection = async () => {
         window.KickExt.transparency.setChatTransparency(initSettings.opacity ?? 100, false);
       }
 
-      // Apply initial blur level
+      // Apply initial blur level (overlay won't exist yet at load time, so we always set the CSS variable here;
+      // once the overlay is created by fullscreen.js, enterFullscreenChat() will call setBlur() again).
       const blurVal = initSettings.blurLevel ?? '6';
       document.documentElement.style.setProperty('--kick-ext-blur', blurVal === '0' ? '0px' : `${blurVal}px`);
 
@@ -185,17 +199,6 @@ const initChatDetection = async () => {
       // Apply initial user info class to body if it is active
       document.body.classList.toggle('kick-ext-hide-user-info', initSettings.hideUserInfo);
 
-      // Apply initial theme
-      const themeVal = initSettings.theme ?? 'silver';
-      if (window.KickExt.theme) {
-        window.KickExt.theme.setTheme(themeVal);
-      }
-      // Seed the localStorage mirror so earlyTheme.js has data on
-      // next page load (FOWT prevention). This is the initial write
-      // that covers the first-ever-install case.
-      try {
-        localStorage.setItem('kick-ext-theme', themeVal);
-      } catch (e) { /* localStorage unavailable — non-critical */ }
       console.log('Kick Extension: Initial settings applied successfully');
     } catch (error) {
       console.error('Kick Extension: Error during initial settings application', error);

@@ -19,25 +19,35 @@ const getAudioCtx = () => {
     return msAudioCtx;
 };
 
+const removeUnlockAudioListeners = () => {
+    document.removeEventListener('pointerup', unlockAudio, { capture: true });
+    document.removeEventListener('keydown', unlockAudio, { capture: true });
+    document.removeEventListener('click', unlockAudio, { capture: true });
+};
+
 const unlockAudio = () => {
     try {
         const ctx = getAudioCtx();
         if (ctx.state === 'suspended') {
             ctx.resume().then(() => {
                 msAudioUnlocked = ctx.state === 'running';
-                if (msAudioUnlocked) loadSoundBuffer();
+                if (msAudioUnlocked) {
+                    loadSoundBuffer();
+                    removeUnlockAudioListeners();
+                }
             }).catch(() => {});
         } else if (ctx.state === 'running') {
             msAudioUnlocked = true;
             loadSoundBuffer();
+            removeUnlockAudioListeners();
         }
     } catch (e) {}
 };
 
-let MS_TONE_DURATION = 0.705;   // fallback, přepíše se skutečnou délkou po dekódování
+let MS_TONE_DURATION = 0.705;   // fallback, replaced by actual length after decoding
 const MS_MIN_GAP = 0.05;
 const MS_MAX_QUEUE_AHEAD = 3.0;
-const MS_SOUND_GAIN = 0.5;        // uprav podle hlasitosti souboru, 0.3-0.6 je rozumný start
+const MS_SOUND_GAIN = 0.5;        // adjust based on file volume, 0.3-0.6 is a reasonable start
 
 let msNextAvailableTime = 0;
 
@@ -57,9 +67,18 @@ const loadSoundBuffer = () => {
             return decoded;
         })
         .catch((e) => {
-            console.warn('Kick Extension: failed to load mention sound', e);
-            msSoundLoadPromise = null;
-            return null;
+            console.warn('Kick Extension: failed to load or decode mention sound, falling back to synthesized beep', e);
+            const ctx = getAudioCtx();
+            const sampleRate = ctx.sampleRate;
+            const buffer = ctx.createBuffer(1, sampleRate * 0.3, sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < sampleRate * 0.3; i++) {
+                data[i] = Math.sin(2 * Math.PI * 600 * (i / sampleRate)) * Math.exp(-i / (sampleRate * 0.05));
+            }
+            msSoundBuffer = buffer;
+            MS_TONE_DURATION = buffer.duration;
+            msSoundLoadPromise = Promise.resolve(buffer);
+            return buffer;
         });
 
     return msSoundLoadPromise;
@@ -67,7 +86,7 @@ const loadSoundBuffer = () => {
 
 const playSound = () => {
     if (!msEnabled || !msAudioUnlocked) return;
-    if (!msSoundBuffer) { loadSoundBuffer(); return; } // ještě nenačteno, tenhle ding přeskoč
+    if (!msSoundBuffer) { loadSoundBuffer(); return; } // not loaded yet, skip this ding
     try {
         const ctx = getAudioCtx();
         if (ctx.state !== 'running') return; // AudioContext is suspended (waiting for user interaction on page)

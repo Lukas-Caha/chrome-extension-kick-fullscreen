@@ -1,6 +1,6 @@
 :root {
-    --bg-dark: #0b0e11;
-    --bg-card: #1a1d23;
+    --bg-dark: #0f1216;
+    --bg-card: #181b21;
     --kick-green: #53fc18;
     --text-main: #efefef;
     --text-dim: #94969b;
@@ -14,7 +14,7 @@
 }
 
 body {
-    width: 320px;
+    width: 310px;
     background-color: var(--bg-dark);
     color: var(--text-main);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -22,15 +22,15 @@ body {
 }
 
 .container {
-    padding: 16px;
+    padding: 14px;
 }
 
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    padding-bottom: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
 }
 
@@ -49,7 +49,7 @@ header {
 }
 
 h1 {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -61,7 +61,38 @@ h1 {
 }
 
 section {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+}
+
+.open-inpage-section {
+    margin-bottom: 16px;
+}
+
+.primary-modal-btn {
+    width: 100%;
+    background: var(--kick-green);
+    color: #000000;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.15s, transform 0.1s;
+    box-shadow: 0 4px 12px rgba(83, 252, 24, 0.2);
+}
+
+.primary-modal-btn:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+.primary-modal-btn:active {
+    transform: translateY(0);
 }
 
 .section-title {
@@ -69,15 +100,15 @@ section {
     font-weight: 700;
     color: var(--text-dim);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     letter-spacing: 0.05em;
 }
 
 .setting-item {
     background: var(--bg-card);
-    padding: 12px;
+    padding: 10px 12px;
     border-radius: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     border: 1px solid var(--border);
 }
 
@@ -90,9 +121,9 @@ section {
 .setting-label {
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .setting-item.flex-row .setting-label {
@@ -102,6 +133,7 @@ section {
 #opacity-value {
     color: var(--kick-green);
     font-family: monospace;
+    font-weight: 700;
 }
 
 /* Range Input Styling */
@@ -120,47 +152,13 @@ input[type=range]::-webkit-slider-runnable-track {
 
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    height: 16px;
-    width: 16px;
+    height: 14px;
+    width: 14px;
     border-radius: 50%;
     background: var(--kick-green);
-    margin-top: -6px;
+    margin-top: -5px;
     cursor: pointer;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
-}
-
-/* Toggle Buttons */
-.toggle-group {
-    display: flex;
-    background: #24272c;
-    padding: 2px;
-    border-radius: 6px;
-    gap: 2px;
-}
-
-.toggle-group.full-width-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    width: 100%;
-}
-
-.toggle-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    padding: 6px 8px;
-    font-size: 11px;
-    font-weight: 600;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-    white-space: nowrap;
-}
-
-.toggle-btn.active {
-    background: var(--kick-green);
-    color: #000000;
 }
 
 /* Switch Styling */
@@ -180,12 +178,9 @@ input[type=range]::-webkit-slider-thumb {
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: #24272c;
-  transition: .4s;
+  transition: .3s;
 }
 
 .slider:before {
@@ -196,7 +191,7 @@ input[type=range]::-webkit-slider-thumb {
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: .4s;
+  transition: .3s;
 }
 
 input:checked + .slider {
@@ -217,7 +212,7 @@ input:checked + .slider:before {
 
 /* Actions */
 .actions {
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .secondary-btn {
@@ -225,9 +220,9 @@ input:checked + .slider:before {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-main);
-    padding: 10px;
+    padding: 8px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
@@ -235,95 +230,4 @@ input:checked + .slider:before {
 
 .secondary-btn:hover {
     background: rgba(255, 255, 255, 0.05);
-}
-
-/* Shortcuts Section */
-.shortcuts-section {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-    margin-bottom: 0;
-}
-
-.shortcuts-panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.shortcut-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-}
-
-.shortcut-key {
-    background: #24272c;
-    color: var(--kick-green);
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-weight: 600;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.shortcut-desc {
-    color: var(--text-dim);
-    font-weight: 500;
-}
-
-/* Silver Theme Overrides for Extension Popup */
-body.theme-silver {
-    --kick-green: #cbd5e1;
-}
-
-body.theme-silver .logo-icon {
-    box-shadow: 0 0 10px rgba(203, 213, 225, 0.35);
-}
-
-body.theme-silver .toggle-btn.active {
-    background: #475569;
-    color: #ffffff;
-}
-
-/* Burgundy Theme Overrides for Extension Popup */
-body.theme-burgundy {
-    --kick-green: #800020;
-}
-
-body.theme-burgundy .logo-icon {
-    box-shadow: 0 0 10px rgba(128, 0, 32, 0.4);
-}
-
-body.theme-burgundy .toggle-btn.active {
-    background: #800020;
-    color: #ffffff;
-}
-
-/* Rainbow Theme Overrides for Extension Popup */
-body.theme-rainbow {
-    --kick-green: #00e676;
-}
-
-body.theme-rainbow .logo-icon {
-    box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
-}
-
-body.theme-rainbow .toggle-btn.active {
-    background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%);
-    color: #ffffff;
-}
-
-body.theme-rainbow input:checked + .slider {
-    background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%);
-}
-
-body.theme-rainbow input[type=range]::-webkit-slider-thumb {
-    background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%);
 }

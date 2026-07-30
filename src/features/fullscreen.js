@@ -13,6 +13,7 @@ let chatHeaderEl = null;
  */
 const enterFullscreenChat = async () => {
   const settings = await window.KickExt.settings.getAllSettings();
+  cachedHideFsHeader = !!settings.hideFullscreenChatHeader;
   if (settings.enableFullscreenChat === false) return;
 
   const chat = document.querySelector('#channel-chatroom');
@@ -119,8 +120,23 @@ const enterFullscreenChat = async () => {
   moveSevenTVRootToFullscreen();
   setupInputMonitor();
   start7TVObserver();
-  applyFontScale();
+  await applyFontScale();
   watchProfileBanner();
+
+  // Kick-start the blur engine for the freshly-created overlay.
+  // This matters most on Firefox where the canvas rAF loop must be started
+  // explicitly — the CSS variable was already set during initial load, but
+  // the loop doesn't exist until we call setBlur() here.
+  if (window.KickExt.blurEngine) {
+    window.KickExt.settings.getAllSettings().then(s => {
+      const blurVal = s.blurLevel ?? '6';
+      const radiusPx = blurVal === '0' ? 0 : Number(blurVal);
+      const video = document.querySelector('video');
+      if (overlay && video) {
+        window.KickExt.blurEngine.setBlur(overlay, video, radiusPx);
+      }
+    }).catch(() => {});
+  }
 };
 
 // =========================================================================
@@ -163,13 +179,13 @@ const adjustOverlayOpacity = async (delta) => {
 // Keyboard shortcuts (Alt+F, Alt+G, Alt++, Alt+-)
 document.addEventListener('keydown', async function keyHandler(e) {
   if (typeof chrome !== 'undefined' && !chrome.runtime?.id) {
-    document.removeEventListener('keydown', keyHandler);
+    document.removeEventListener('keydown', keyHandler, { capture: true });
     return;
   }
   const isBrowserFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
 
   // 1. Alt+F: Toggle Fullscreen Chat option (applies immediately if in browser fullscreen)
-  if (e.altKey && e.key.toLowerCase() === 'f') {
+  if (e.altKey && e.code === 'KeyF') {
     e.preventDefault();
     const settings = await window.KickExt.settings.getAllSettings();
     const newEnableVal = !settings.enableFullscreenChat;
@@ -193,7 +209,7 @@ document.addEventListener('keydown', async function keyHandler(e) {
   // Shortcuts that require the chat overlay to be active (isFullscreen)
   if (isFullscreen) {
     // 1. Enter: Focus chat input if not already typing or interacting with a button
-    if (e.key === 'Enter' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    if (e.code === 'Enter' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
       const activeEl = document.activeElement;
       const tagName = activeEl ? activeEl.tagName.toLowerCase() : '';
       const isInteractive = activeEl && (
@@ -215,23 +231,23 @@ document.addEventListener('keydown', async function keyHandler(e) {
     }
 
     // 2. Alt+G: Toggle Ghost Mode
-    if (e.altKey && e.key.toLowerCase() === 'g') {
+    if (e.altKey && e.code === 'KeyG') {
       e.preventDefault();
       toggleGhostMode();
     }
 
     // 3. Alt++ and Alt+-: Adjust Opacity
     if (e.altKey) {
-      if (e.key === '+' || e.key === '=' || e.code === 'Equal' || e.code === 'NumpadAdd') {
+      if (e.code === 'Equal' || e.code === 'NumpadAdd') {
         e.preventDefault();
         adjustOverlayOpacity(10);
-      } else if (e.key === '-' || e.code === 'Minus' || e.code === 'NumpadSubtract') {
+      } else if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
         e.preventDefault();
         adjustOverlayOpacity(-10);
       }
     }
   }
-});
+}, { capture: true });
 
 
 /**
@@ -260,17 +276,15 @@ const exitFullscreenChat = () => {
   if (seventvRoot) seventvRoot.removeAttribute('data-ke-portaled');
 
   // Restore 7TV tooltip container to document.body.
-  // Reset its left/top to off-screen so stale fullscreen coordinates are never visible.
-  // 7TV controls visibility via the 'active' attribute — do NOT touch display.
-  // On the next emote hover, 7TV's JS will reposition and show it correctly.
+  // 7TV often misses the 'mouseleave' event during DOM re-parenting, leaving the tooltip stuck on screen.
+  // We use a CSS class to hide it and a MutationObserver to unhide it the next time 7TV interacts with it.
   const tooltip = document.getElementById('seventv-tooltip-container');
   if (tooltip) {
-    tooltip.style.left = '-9999px';
-    tooltip.style.top = '-9999px';
     if (tooltip.parentNode !== document.body) {
       document.body.appendChild(tooltip);
     }
     tooltip.removeAttribute('data-ke-portaled');
+    unstick7TVTooltip(tooltip);
   }
 
   if (chat && placeholder && placeholder.parentNode) {
@@ -369,7 +383,34 @@ const moveSevenTVRootToFullscreen = () => {
   if (tooltip && tooltip.parentNode !== fullscreenContainer) {
     tooltip.setAttribute('data-ke-portaled', 'true');
     fullscreenContainer.appendChild(tooltip);
+    unstick7TVTooltip(tooltip);
   }
+};
+
+// Helper to hide stuck 7TV tooltips during DOM re-parenting
+const unstick7TVTooltip = (tooltip) => {
+  if (!tooltip) return;
+  tooltip.classList.add('kick-ext-hide-stuck-tooltip');
+  
+  if (tooltip._keUnstickObserver) {
+    tooltip._keUnstickObserver.disconnect();
+  }
+  
+  const observer = new MutationObserver((mutations) => {
+    let realChange = false;
+    for (const m of mutations) {
+      if (m.type === 'childList') realChange = true;
+      if (m.type === 'attributes' && m.attributeName !== 'class') realChange = true;
+    }
+    if (realChange) {
+      tooltip.classList.remove('kick-ext-hide-stuck-tooltip');
+      observer.disconnect();
+      delete tooltip._keUnstickObserver;
+    }
+  });
+  
+  tooltip._keUnstickObserver = observer;
+  observer.observe(tooltip, { attributes: true, childList: true, subtree: true });
 };
 
 // Input monitoring (for autocomplete - still needed to trigger move check)
@@ -383,6 +424,8 @@ const scheduleInputCheck = () => {
   }, 30);
 };
 
+let inputKeydownHandler = null;
+
 const setupInputMonitor = () => {
   const input = getChatInput();
   if (!input || input.dataset.kickExtInputMonitored) return;
@@ -392,14 +435,14 @@ const setupInputMonitor = () => {
   input.addEventListener('keyup', scheduleInputCheck);
 
   // Enter to unfocus when empty in fullscreen
-  input.addEventListener('keydown', (e) => {
-    if (isFullscreen && e.key === 'Enter' && !e.shiftKey) {
+  inputKeydownHandler = (e) => {
+    if (isFullscreen && e.code === 'Enter' && !e.shiftKey) {
       let isEmpty = false;
       if (input.tagName === 'TEXTAREA') {
         isEmpty = input.value.trim() === '';
       } else {
         const hasText = input.textContent.trim() !== '';
-        // Prohlížeče jako Kick používají div/p tagy i když jsou prázdné. Hledáme reálný obsah (obrázky/emoty).
+        // Browsers like Kick use div/p tags even when empty. Look for real content (images/emotes).
         const hasEmotes = input.querySelector('img') !== null ||
           Array.from(input.querySelectorAll('*')).some(el =>
             typeof el.className === 'string' && el.className.toLowerCase().includes('emote')
@@ -413,13 +456,22 @@ const setupInputMonitor = () => {
         input.blur();
       }
     }
-  }, { capture: true });
+  };
+  input.addEventListener('keydown', inputKeydownHandler, { capture: true });
 };
 
 const cleanupInputMonitor = () => {
   if (inputCheckTimer) { clearTimeout(inputCheckTimer); inputCheckTimer = null; }
   const input = getChatInput();
-  if (input) delete input.dataset.kickExtInputMonitored;
+  if (input) {
+    delete input.dataset.kickExtInputMonitored;
+    input.removeEventListener('input', scheduleInputCheck);
+    input.removeEventListener('keyup', scheduleInputCheck);
+    if (inputKeydownHandler) {
+      input.removeEventListener('keydown', inputKeydownHandler, { capture: true });
+      inputKeydownHandler = null;
+    }
+  }
 };
 
 // =========================================================================
@@ -497,10 +549,10 @@ const stopModActionsObserver = () => {
   }
 };
 
-/**
- * Finds and hides the chat header bar inside the overlay
- */
-const applyFullscreenChatHeader = async () => {
+const applyFullscreenChatHeader = (forcedValue) => {
+  if (forcedValue !== undefined) {
+    cachedHideFsHeader = !!forcedValue;
+  }
   if (!isFullscreen) return;
 
   const overlay = document.getElementById(OVERLAY_ID);
@@ -508,10 +560,6 @@ const applyFullscreenChatHeader = async () => {
 
   const chatRoom = document.querySelector('#channel-chatroom');
   if (!chatRoom) return;
-
-  const settings = await window.KickExt.settings.getAllSettings();
-  // Cache the value so the mutation observer callback can use it synchronously
-  cachedHideFsHeader = settings.hideFullscreenChatHeader;
 
   if (!chatHeaderEl) {
     // Direct CSS selector is far faster than iterating all divs
@@ -855,7 +903,10 @@ const relocateProfileBanner = (cardEl) => {
     btn.dispatchEvent(clickEvent);
 
     // 3. If it wasn't the Close button, React keeps it open. We bring it back to fullscreen.
-    const isCloseBtn = btn.classList.contains('absolute');
+    const isCloseBtn =
+      btn.getAttribute('aria-label')?.toLowerCase().includes('close') ||
+      btn.querySelector('svg[class*="close" i], path[class*="close" i]') ||
+      (btn.textContent.trim() === '' && btn.querySelector('svg') && btn.classList.contains('absolute') && btn.closest('[class*="top-"]'));
     if (!isCloseBtn) {
       setTimeout(() => {
         if (movedElement.isConnected && document.body.contains(movedElement)) {
@@ -869,9 +920,8 @@ const relocateProfileBanner = (cardEl) => {
   activeProfileBanner = { wrapper, movedElement: toMove, origParent, origNextSibling, onPointerMove, onPointerUp };
   requestAnimationFrame(positionProfileBanner);
 
-  // Escape key closes banner
-  activeProfileBanner._escHandler = (e) => { if (e.key === 'Escape') cleanupProfileBanner(); };
-  document.addEventListener('keydown', activeProfileBanner._escHandler);
+  // Escape key closes banner via stack
+  window.KickExt.escapeStack.pushEscapeHandler(cleanupProfileBanner);
 
   // Watch for React-side removal (Kick unmounts the card content)
   profileBannerRemovalObserver = new MutationObserver(() => {
@@ -893,8 +943,8 @@ const cleanupProfileBanner = () => {
   }
   if (!activeProfileBanner) return;
 
-  const { wrapper, movedElement, origParent, origNextSibling, _escHandler, onPointerMove, onPointerUp } = activeProfileBanner;
-  if (_escHandler) document.removeEventListener('keydown', _escHandler);
+  const { wrapper, movedElement, origParent, origNextSibling, onPointerMove, onPointerUp } = activeProfileBanner;
+  window.KickExt.escapeStack.popEscapeHandler(cleanupProfileBanner);
   if (onPointerMove) document.removeEventListener('pointermove', onPointerMove, { capture: true });
   if (onPointerUp) document.removeEventListener('pointerup', onPointerUp, { capture: true });
 

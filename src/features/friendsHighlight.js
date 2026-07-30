@@ -12,6 +12,7 @@ let fhChatObserver = null;
 let fhCardObserver = null;
 let fhObservedChatRoom = null;
 let fhRestartTimer = null;
+let fhFallbackPollTimer = null;
 
 /**
  * Extracts the username of the message sender.
@@ -345,17 +346,25 @@ document.addEventListener('webkitfullscreenchange', fhHandleFullscreenChange);
 // MutationObservers can miss the card opening when React updates #user-identity
 // in-place rather than adding/removing nodes. This lightweight interval catches
 // any card that the observer missed and injects the friend star.
-setInterval(() => {
-  const identityEl = document.querySelector('#user-identity');
-  if (!identityEl) return;
-  const card = identityEl.querySelector('.bg-surface-highest');
-  if (!card) return;
-  if (card.querySelector('.kick-ext-friend-toggle')) return; // already injected
-  const followBtn = card.querySelector('button[aria-label="Follow"], button[aria-label="Unfollow"]');
-  const userLink = card.querySelector('a[href^="https://kick.com/"]');
-  if (!followBtn || !userLink) return; // card not fully rendered yet
-  fhCheckForUserCard(card);
-}, 300);
+const fhFallbackPoll = () => {
+  fhFallbackPollTimer = setTimeout(() => {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+      return; // extension context gone, stop rescheduling
+    }
+    fhFallbackPoll();
+    if (document.hidden) return; // pause when tab is in background
+    const identityEl = document.querySelector('#user-identity');
+    if (!identityEl) return;
+    const card = identityEl.querySelector('.bg-surface-highest');
+    if (!card) return;
+    if (card.querySelector('.kick-ext-friend-toggle')) return; // already injected
+    const followBtn = card.querySelector('button[aria-label="Follow"], button[aria-label="Unfollow"]');
+    const userLink = card.querySelector('a[href^="https://kick.com/"]');
+    if (!followBtn || !userLink) return; // card not fully rendered yet
+    fhCheckForUserCard(card);
+  }, 300);
+};
+fhFallbackPoll();
 
 // Auto bootstrap
 if (document.readyState === 'loading') {

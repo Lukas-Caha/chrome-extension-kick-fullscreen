@@ -21,7 +21,29 @@ const DEFAULT_SETTINGS = {
   blurLevel: '6', // '0' = off, '1' = light, '6' = full
   quickClipboardSnippets: [],
   coopStreamLastUsername: '',
-  theme: 'silver', // 'silver' = Liquid Silver, 'green' = Basic Green
+  friendUsernames: [],
+};
+
+const SETTING_VALIDATORS = {
+  opacity: (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100) ? v : DEFAULT_SETTINGS.opacity,
+  blurLevel: (v) => {
+    const allowed = ['0', '1', '2', '3', '4', '5', '6'];
+    return (typeof v === 'string' && allowed.includes(v)) ? v : DEFAULT_SETTINGS.blurLevel;
+  },
+  posX: (v) => (v === null || (typeof v === 'number' && Number.isFinite(v))) ? v : DEFAULT_SETTINGS.posX,
+  posY: (v) => (v === null || (typeof v === 'number' && Number.isFinite(v))) ? v : DEFAULT_SETTINGS.posY,
+  chatHeight: (v) => (v === null || (typeof v === 'number' && Number.isFinite(v))) ? v : DEFAULT_SETTINGS.chatHeight,
+  chatWidth: (v) => (v === null || (typeof v === 'number' && Number.isFinite(v))) ? v : DEFAULT_SETTINGS.chatWidth,
+};
+
+const sanitizeSettings = (merged) => {
+  const out = { ...merged };
+  for (const key of Object.keys(SETTING_VALIDATORS)) {
+    if (key in out) {
+      out[key] = SETTING_VALIDATORS[key](out[key]);
+    }
+  }
+  return out;
 };
 
 /**
@@ -35,7 +57,11 @@ const getSetting = async (key) => {
   }
   try {
     const result = await chrome.storage.local.get([key]);
-    return result[key] ?? DEFAULT_SETTINGS[key];
+    let value = result[key] ?? DEFAULT_SETTINGS[key];
+    if (key in SETTING_VALIDATORS) {
+      value = SETTING_VALIDATORS[key](value);
+    }
+    return value;
   } catch (error) {
     console.error('Kick Extension Settings Error:', error);
     return DEFAULT_SETTINGS[key];
@@ -68,7 +94,7 @@ const getAllSettings = async () => {
   }
   try {
     const result = await chrome.storage.local.get(null);
-    return { ...DEFAULT_SETTINGS, ...result };
+    return sanitizeSettings({ ...DEFAULT_SETTINGS, ...result });
   } catch (error) {
     return DEFAULT_SETTINGS;
   }

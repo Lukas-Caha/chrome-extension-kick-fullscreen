@@ -1,35 +1,51 @@
 # Kick Extension Development Log
-**Date:** 2026-07-25
-**Status:** Beta - Codebase Cleaning & Architectural Refactoring
-**Last Backup:** 2026-07-25 - BACKUP42(file_structure_refactor)
+**Date:** 2026-07-27
+**Status:** Beta - Themes Subsystem Removal & Legacy Theme Documentation
+**Last Backup:** 2026-07-29 - BACKUP46(animation_and_blur_fixes)
+
+### 64. Fast Fade Panel Hide Animation & Performance Optimization (BACKUP46)
+- **Bug Fix (Panel Closing Artifacts):** Addressed a visual artifact ("dark line") left behind when closing chat panels (Settings, Gift Shop, Points) in the fullscreen overlay. The artifact was caused by the lingering padding and `backdrop-filter` of the panel wrapper during its shrink animation.
+- **Fix:** Refined `.bg-surface-base[style*="max-height: 0"]` rule to smoothly and quickly hide panels. Overrode Kick's native 350ms height transition with a fast 150ms slide-down, while simultaneously fading opacity and background color to transparent. Removed `backdrop-filter` immediately upon closing.
+- **Optimization (Gifted Subs Blur):** Replaced the unconditional GPU-intensive `backdrop-filter: blur(6px)` and `will-change: backdrop-filter` on the gifted subs marquee in `chat.css` with a dynamic rule that respects the user's blur settings (`.kick-ext-blur-active` and `var(--kick-ext-blur)`), significantly improving Firefox compositor performance.
+- **Backup:** BACKUP46(animation_and_blur_fixes) created.
+
+### 63. Complete Theme Subsystem Removal & Legacy Documentation (BACKUP43)
+- **Theme Engine Removal:** Removed all custom color theme engine scripts (`src/features/theme.js`, `src/content/earlyTheme.js`, `src/styles/earlyTheme.css`).
+- **UI Cleanups:** Removed theme toggle controls and theme preview cards from Toolbar Popup (`popup.html`, `popup.js`, `popup.css`), In-Chat Settings Panel (`chatSettingsInjector.js`), and In-Page Settings Modal (`inPageSettingsModal.js`).
+- **Style Cleanups:** Stripped all theme-specific CSS overrides from `base.css`, `settings-panel.css`, `inPageModal.css`, and `popup.css`.
+- **Button Colors:** Restored default Kick bright green (`#53FC18`) for buttons in Coop Stream Window (`coopWindow.js`) and Quick Clipboard (`quickClipboard.js`).
+- **Image Assets Preserved:** Renamed `images` folder to `imagesNotUsed` (containing `kick-logo-silver.png`, `kick-logo-burgundy.svg`, `kick-logo-rainbow.svg`) to preserve all vector and raster assets without deletion.
+- **Legacy Documentation:** Created `HowThemesWereDonePreviously.md` detailing the former 4-layer theme engine, FOWT prevention, SVG defs injection, logo swapping, debounced mutation scanning, and selector gotchas.
+- **Backup Consolidation:** Moved all theme-featuring backups (`BACKUP35`, `BACKUP37`, `BACKUP38`, `BACKUP39`, `BACKUP41`) into `archive/backups_with_themes/`.
+- **Backup:** BACKUP43(removed_themes) created.
 
 ### 62. Split Oversized Files (content.js, base.css) Into Feature Modules
-- **Content Script Modularization:** Extracted theme engine from `src/content/content.js` into new feature module `src/features/theme.js` (1,039 lines). `content.js` (218 lines) now serves purely as orchestrator for event listeners, popup communication, and initial settings application.
+// [REMOVED - Theme engine removed on 2026-07-27] Extracted theme engine from `src/content/content.js` into new feature module `src/features/theme.js` (1,039 lines). `content.js` (218 lines) now serves purely as orchestrator for event listeners, popup communication, and initial settings application.
 - **Stylesheet Modularization:** Split `src/styles/base.css` (1,083 lines total) into feature-focused CSS stylesheets:
   - `src/styles/panels.css`: Floating panels glass effect, 7TV emote menu/autocomplete layout, compact mode, and stacking/z-index elevations.
   - `src/styles/chat.css`: Chat message hover glass effect, gifted subs marquee, chat settings height clamps, and Ghost Mode overlay rules.
-  - `src/styles/settings-panel.css`: In-chat settings panel controls, sliders, toggles, shortcuts guide, and theme overrides.
+  // [REMOVED - Theme overrides removed on 2026-07-27] `src/styles/settings-panel.css`: In-chat settings panel controls, sliders, toggles, shortcuts guide, and theme overrides.
   - `src/styles/fullscreen.css`: Extra small font scaling and fullscreen profile banner positioning.
   - `src/styles/compat.css`: Mo'Kick extension compatibility rules.
-  - `src/styles/base.css`: Retained core overlay shell, left-side chat alignment, friend message borders, `:root` CSS variables, and global theme overrides.
-- **Manifest Updates:** Registered `src/features/theme.js` and all 5 new CSS stylesheets in `manifest.json`.
+  // [REMOVED - Theme overrides removed on 2026-07-27] `src/styles/base.css`: Retained core overlay shell, left-side chat alignment, friend message borders, `:root` CSS variables, and global theme overrides.
+// [REMOVED - theme.js removed on 2026-07-27] Registered `src/features/theme.js` and all 5 new CSS stylesheets in `manifest.json`.
 - **Files:** `src/content/content.js` [MODIFIED], `src/features/theme.js` [NEW], `src/styles/base.css` [MODIFIED], `src/styles/panels.css` [NEW], `src/styles/chat.css` [NEW], `src/styles/settings-panel.css` [NEW], `src/styles/fullscreen.css` [NEW], `src/styles/compat.css` [NEW], `manifest.json` [MODIFIED]
 - **Backup:** BACKUP42(file_structure_refactor) created.
 
 ### 61. Architectural Review & Dead Asset Cleanup
 - **Dead Asset Cleanup:** Removed unused directory `sound/` (and duplicate `mention-ding.ogg`). Removed unreferenced images `images/kick-logo-burgundy.png` and `images/kick-logo-silver.svg`. Cleaned up `manifest.json` `web_accessible_resources` array.
-- **Table-Driven Theme Membership Checks:** Replaced hardcoded theme string comparisons (`silver`, `burgundy`, `rainbow`) in `src/content/content.js` with table-driven checks against `THEMES` (`!THEMES[activeTheme] || activeTheme === 'green'`), ensuring `'green'` remains excluded from active theme override gates. Dynamically derived theme class names in `removeTheme()`.
-- **Dynamic Logo Revert:** Updated `replaceKickLogo()` to capture `el.src` into `el.dataset.keOrigSrc` and `srcset` into `el.dataset.keOrigSrcset` before replacement. Updated `removeTheme()` to restore `src`/`srcset` from dataset attributes upon theme removal instead of hardcoding `/img/kick-logo.svg`.
+// [REMOVED - Theme checks removed on 2026-07-27] Replaced hardcoded theme string comparisons (`silver`, `burgundy`, `rainbow`) in `src/content/content.js` with table-driven checks against `THEMES` (`!THEMES[activeTheme] || activeTheme === 'green'`), ensuring `'green'` remains excluded from active theme override gates. Dynamically derived theme class names in `removeTheme()`.
+// [REMOVED - Dynamic logo revert removed on 2026-07-27] Updated `replaceKickLogo()` to capture `el.src` into `el.dataset.keOrigSrc` and `srcset` into `el.dataset.keOrigSrcset` before replacement. Updated `removeTheme()` to restore `src`/`srcset` from dataset attributes upon theme removal instead of hardcoding `/img/kick-logo.svg`.
 - **Scope Discipline & Namespace Safety:** Enforced strict scope discipline and confirmed attribute namespace safety (`data-ke-orig-*`) against external/inline style rules.
 - **Files:** `manifest.json` [MODIFIED], `src/content/content.js` [MODIFIED], `sound/` [DELETED], `images/kick-logo-burgundy.png` [DELETED], `images/kick-logo-silver.svg` [DELETED]
 - **Backup:** BACKUP40(refactoring_cleaning) created.
 
 ### 60. Rainbow Theme Category & Viewer Count Scoped Styling
-- **Bug Fix (Chat Font Recoloring in Themes):** Resolved an issue where broad substring selector `[style*="translateY"]` in `applyAllSilver()` ran on chat elements in `#channel-chatroom`, causing chat font colors to be overridden in Silver, Burgundy, and Rainbow themes.
-- **Scoped Rainbow Styling (Category & Viewer Count):**
-  - Added an explicit chat room guard in `applySilverToElement()` (`if (el.closest('#channel-chatroom, #kick-ext-chat-overlay')) return;`) to ensure chat zprávy/elements are never recolored by theme font re-scans.
-  - Removed global `[style*="translateY"]` from `applyAllSilver()` document query.
-  - Scoped Rainbow theme gradient text styling (`background: ${RAINBOW_GRADIENT} !important; -webkit-background-clip: text; color: transparent !important;`) strictly to category links (`a[href*="/category/"]`) and viewer count numbers (`div:not(#channel-chatroom *):not(#kick-ext-chat-overlay *)[style*="translateY"]`).
+// [REMOVED - Theme feature removed on 2026-07-27] Resolved an issue where broad substring selector `[style*="translateY"]` in `applyAllSilver()` ran on chat elements in `#channel-chatroom`, causing chat font colors to be overridden in Silver, Burgundy, and Rainbow themes.
+// [REMOVED - Theme feature removed on 2026-07-27] Scoped Rainbow Styling (Category & Viewer Count):
+//   - Added an explicit chat room guard in `applySilverToElement()` (`if (el.closest('#channel-chatroom, #kick-ext-chat-overlay')) return;`) to ensure chat zprávy/elements are never recolored by theme font re-scans.
+//   - Removed global `[style*="translateY"]` from `applyAllSilver()` document query.
+//   - Scoped Rainbow theme gradient text styling (`background: ${RAINBOW_GRADIENT} !important; -webkit-background-clip: text; color: transparent !important;`) strictly to category links (`a[href*="/category/"]`) and viewer count numbers (`div:not(#channel-chatroom *):not(#kick-ext-chat-overlay *)[style*="translateY"]`).
 - **Files:** `src/content/content.js` [MODIFIED]
 - **Backup:** Updated latest backup `archive/BACKUP39_fullscreen_panels_and_colors_fix`.
 
@@ -41,11 +57,11 @@
 - **Backup:** BACKUP39_fullscreen_panels_and_colors_fix created.
 
 ### 58. Color Themes Engine (Burgundy & Rainbow), Settings Layout & Feature UI Theme Integration
-- **Feature (Burgundy & Rainbow Themes):** Expanded `window.KickExt.theme` to support solid Burgundy (`#800020`) and vibrant Rainbow themes along with Silver and Default Green. Integrated SVG logos (`images/kick-logo-burgundy.svg` and `images/kick-logo-rainbow.svg`) and dynamic control recoloring.
-- **UI Alignment (Toolbar Popup & In-Chat Panel):** Updated Brand Color options to a full-width 4-column grid layout (`Green`, `Silver`, `Burgundy`, `Rainbow`), preventing overflow in toolbar popup and text wrapping in settings panel. Switches, toggles, slider thumbs, and active button states dynamically inherit active theme styling.
-- **Feature (Quick Clipboard & Coop Stream Theme Integration):** Added `--ke-accent` and `--ke-accent-text` CSS variables to `setTheme()`, connecting Quick Clipboard buttons/checkboxes (`quickClipboard.js`) and Coop Stream prompt buttons (`coopWindow.js`) to active theme colors with zero functional logic changes.
-- **Bug Fix (Rainbow Mention Corner Highlight):** Fixed mention message left-border highlights in Rainbow theme using `@keyframes ke-rainbow-border` color-cycling animation (4s linear loop), preserving Kick's native rounded corners (`rounded-lg` / `border-radius: 0.5rem`) without `border-image` clipping issues.
-- **Bug Fix (Search Autocomplete & Highlight Inline Colors):** Added inline style selectors `[style*="rgb(83, 252, 24)"]` and `[style*="53fc18"]` to `SELECTORS_RGB` and theme CSS overrides in `content.js` so search/category autocomplete match highlights dynamically inherit active theme colors instead of staying native Kick green.
+// [REMOVED - Theme feature removed on 2026-07-27] Expanded `window.KickExt.theme` to support solid Burgundy (`#800020`) and vibrant Rainbow themes along with Silver and Default Green. Integrated SVG logos (`images/kick-logo-burgundy.svg` and `images/kick-logo-rainbow.svg`) and dynamic control recoloring.
+// [REMOVED - Theme feature removed on 2026-07-27] Updated Brand Color options to a full-width 4-column grid layout (`Green`, `Silver`, `Burgundy`, `Rainbow`), preventing overflow in toolbar popup and text wrapping in settings panel. Switches, toggles, slider thumbs, and active button states dynamically inherit active theme styling.
+// [REMOVED - Theme feature removed on 2026-07-27] Added `--ke-accent` and `--ke-accent-text` CSS variables to `setTheme()`, connecting Quick Clipboard buttons/checkboxes (`quickClipboard.js`) and Coop Stream prompt buttons (`coopWindow.js`) to active theme colors with zero functional logic changes.
+// [REMOVED - Theme feature removed on 2026-07-27] Fixed mention message left-border highlights in Rainbow theme using `@keyframes ke-rainbow-border` color-cycling animation (4s linear loop), preserving Kick's native rounded corners (`rounded-lg` / `border-radius: 0.5rem`) without `border-image` clipping issues.
+// [REMOVED - Theme feature removed on 2026-07-27] Added inline style selectors `[style*="rgb(83, 252, 24)"]` and `[style*="53fc18"]` to `SELECTORS_RGB` and theme CSS overrides in `content.js` so search/category autocomplete match highlights dynamically inherit active theme colors instead of staying native Kick green.
 - **Files:** `src/content/content.js` [MODIFIED], `src/features/chatSettingsInjector.js` [MODIFIED], `src/features/quickClipboard.js` [MODIFIED], `src/features/coopWindow.js` [MODIFIED], `src/styles/base.css` [MODIFIED], `src/popup/popup.html` [MODIFIED], `src/popup/popup.js` [MODIFIED], `src/popup/popup.css` [MODIFIED], `images/kick-logo-burgundy.svg` [NEW], `images/kick-logo-rainbow.svg` [NEW], `manifest.json` [MODIFIED]
 - **Backup:** BACKUP37(color_themes_and_fixes) updated and renamed.
 
@@ -543,3 +559,20 @@
 - **Vector SVG Logo Replacement:** Configured Kick's main site header logo to swap to the high-contrast vector `images/kick-logo-burgundy.svg` asset when Burgundy theme is selected. Registered the SVG in `manifest.json` under `web_accessible_resources`.
 - **In-Chat & Extension Popup Alignment:** Added the Burgundy option to the Appearance section in both the in-chat settings panel (`chatSettingsInjector.js`) and extension toolbar popup (`popup.html`, `popup.js`, `popup.css`), ensuring instant theme switching and settings synchronization across UI surfaces.
 - **Backup:** `BACKUP37(burgundy_theme_and_fixes)` created.
+
+---
+
+## 📅 July 27, 2026 - Navbar Settings Button & 7TV Fixes (BACKUP44)
+- **Navbar Settings Injection:** Rewrote `navButtonInjector.js` to place the settings gear icon in Kick's top right navigation bar (next to the profile/7TV section) instead of hijacking the left sidebar collapse button.
+- **7TV Svelte Compatibility:** Discovered that immediately appending to Kick's React-managed navbar during initial load crashed 7TV's Svelte application, disabling emote hover tooltips. Added a `setTimeout(..., 2500)` delay to allow frameworks to hydrate safely before inserting the extension's button.
+- **UI & Modal Polish:** Removed outdated `cursor: move` drag logic from the settings modal header. Adjusted modal sidebar background transparency to display correctly inside the parent modal blur context. Replaced all emoji icons in the UI with cleaner vector SVGs.
+- **Theme Removal:** Completely stripped all old theme features across the codebase (Silver, Burgundy, etc.) per user request, defaulting the UI to a clean, single styling approach.
+- **Backup:** `BACKUP44(nav_button_fix)` created.
+
+---
+
+## 📅 July 29, 2026 - Firefox 7TV Stacking & Blur Fixes (BACKUP45)
+- **Firefox Nested Blur Bug:** Addressed a critical Firefox rendering bug (Bug 1746241) where elements nested inside a container with `backdrop-filter` fail to render their own blur. Moved the main chat overlay's background and `backdrop-filter` to a pseudo-element (`::before`), allowing the settings panel to successfully apply its own glassmorphism blur in Firefox.
+- **7TV Firefox Stacking Fix:** Fixed a Firefox compositor bug (Bug 1606992) where `backdrop-filter` forced 7TV's emote and autocomplete menus to render behind Kick's chat messages due to 3D transforms (`translateY`) on the messages overriding z-index. Created a Firefox-specific exception (`@-moz-document`) to disable `backdrop-filter` on 7TV menus and apply a solid dark background (`#121212`) to guarantee they always stay on top.
+- **7TV Root Elevation:** Added global `z-index: 100000000 !important` and explicit fallbacks (`:-moz-full-screen`, `body.ext-fullscreen-active`) for `#seventv-root` to ensure it always renders above the extension's chat overlay regardless of theater mode or native fullscreen status.
+- **Backup:** `BACKUP45(firefox_blur_7tv_fix)` created.

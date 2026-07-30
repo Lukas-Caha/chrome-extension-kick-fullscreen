@@ -8,7 +8,7 @@ const makeResizable = (el, handle, type = 'bottom') => {
   let startWidth, startHeight;
   let startLeft, startRight;
 
-  const onMouseDown = (e) => {
+  const onPointerDown = (e) => {
     isResizing = true;
     
     const parent = el.parentElement || document.body;
@@ -24,13 +24,13 @@ const makeResizable = (el, handle, type = 'bottom') => {
     startY = e.clientY;
     
     el.classList.add('is-resizing');
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
     
     e.preventDefault();
   };
 
-  const onMouseMove = (e) => {
+  const onPointerMove = (e) => {
     if (!isResizing) return;
 
     const parent = el.parentElement || document.body;
@@ -40,7 +40,7 @@ const makeResizable = (el, handle, type = 'bottom') => {
 
     // --- Height Resizing (Common) ---
     let newHeight = startHeight + deltaY;
-    const minHeight = 75; // Sníženo ze 150 na 75
+    const minHeight = 75; // Reduced from 150 to 75
     const maxHeight = parentRect.height - (el.getBoundingClientRect().top - parentRect.top) - 10;
     newHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
     el.style.height = `${newHeight}px`;
@@ -77,14 +77,14 @@ const makeResizable = (el, handle, type = 'bottom') => {
     }
   };
 
-  const onMouseUp = async () => {
+  const onPointerUp = async () => {
     if (!isResizing) return;
     
     isResizing = false;
     el.classList.remove('is-resizing');
     
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
 
     if (window.KickExt && window.KickExt.settings) {
       await window.KickExt.settings.saveSetting('posX', el.style.left);
@@ -94,7 +94,7 @@ const makeResizable = (el, handle, type = 'bottom') => {
     }
   };
 
-  handle.addEventListener('mousedown', onMouseDown);
+  handle.addEventListener('pointerdown', onPointerDown);
   handle.style.cursor = (type === 'corner') ? 'nesw-resize' : 'ns-resize';
 };
 

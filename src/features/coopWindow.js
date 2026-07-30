@@ -30,6 +30,7 @@ const cwGetOverlayParent = () => {
 
 const cwClosePrompt = () => {
     if (!cwPrompt) return;
+    window.KickExt.escapeStack.popEscapeHandler(cwClosePrompt);
     cwPrompt.remove();
     cwPrompt = null;
 };
@@ -53,7 +54,7 @@ const cwOpenPrompt = async () => {
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 10px;
         box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-        z-index: 2147483647;
+        z-index: 2147483000;
         backdrop-filter: blur(var(--kick-ext-blur));
         -webkit-backdrop-filter: blur(var(--kick-ext-blur));
         padding: 12px;
@@ -66,15 +67,16 @@ const cwOpenPrompt = async () => {
 
     cwPrompt.innerHTML = `
         <span style="font-size:13px;font-weight:600;white-space:nowrap;">🎮 Coop stream:</span>
-        <input id="kick-ext-coop-input" placeholder="streamer username" value="${lastName}"
+        <input id="kick-ext-coop-input" placeholder="streamer username" value=""
             style="background:rgba(26, 27, 30, var(--kick-ext-panel-alpha));border:1px solid rgba(255, 255, 255, 0.1);color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;width:160px;">
-        <button id="kick-ext-coop-go" style="background:var(--ke-accent, #4ADE80);color:#0f172a;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">Open</button>
+        <button id="kick-ext-coop-go" style="background:#53FC18;color:#0f172a;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">Open</button>
         <button id="kick-ext-coop-cancel" style="background:none;border:none;color:#a3a3a3;font-size:16px;cursor:pointer;">×</button>
     `;
 
     cwGetOverlayParent().appendChild(cwPrompt);
 
     const input = cwPrompt.querySelector('#kick-ext-coop-input');
+    input.value = lastName;
     input.focus();
     input.select();
 
@@ -90,10 +92,11 @@ const cwOpenPrompt = async () => {
     cwPrompt.querySelector('#kick-ext-coop-cancel').addEventListener('click', cwClosePrompt);
     input.addEventListener('keydown', (e) => {
         e.stopPropagation();
-        if (e.key === 'Enter') submit();
-        if (e.key === 'Escape') cwClosePrompt();
+        if (e.code === 'Enter') submit();
+        if (e.code === 'Escape') cwClosePrompt();
     });
     cwPrompt.addEventListener('click', (e) => e.stopPropagation());
+    window.KickExt.escapeStack.pushEscapeHandler(cwClosePrompt);
 };
 
 // ---------------------------------------------------------------------
@@ -102,6 +105,7 @@ const cwOpenPrompt = async () => {
 
 const cwCloseStreamWindow = () => {
     if (!cwWindow) return;
+    window.KickExt.escapeStack.popEscapeHandler(cwCloseStreamWindow);
     if (cwResizeObserver) {
         cwResizeObserver.unobserve(cwWindow);
     }
@@ -163,7 +167,7 @@ const cwOpenStreamWindow = (username) => {
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 10px;
         box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-        z-index: 2147483647;
+        z-index: 2147483000;
         backdrop-filter: blur(var(--kick-ext-blur));
         -webkit-backdrop-filter: blur(var(--kick-ext-blur));
         display: flex;
@@ -175,15 +179,18 @@ const cwOpenStreamWindow = (username) => {
 
     cwWindow.innerHTML = `
         <div id="kick-ext-coop-handle" style="display:flex;align-items:center;justify-content:space-between;height:30px;padding:0 10px;background:rgba(26, 27, 30, var(--kick-ext-panel-alpha));border-bottom:1px solid rgba(255, 255, 255, 0.1);cursor:move;flex-shrink:0;box-sizing:border-box;">
-            <span style="font-size:12px;font-weight:600;color:#fff;">🎮 ${username}</span>
+            <span id="kick-ext-coop-title" style="font-size:12px;font-weight:600;color:#fff;"></span>
             <button id="kick-ext-coop-close" style="background:none;border:none;color:#a3a3a3;font-size:16px;cursor:pointer;line-height:1;">×</button>
         </div>
         <iframe
             src="https://player.kick.com/${encodeURIComponent(username)}?autoplay=true&muted=true"
             style="flex:1;width:100%;border:none;"
-            allow="autoplay; fullscreen">
+            allow="autoplay; fullscreen"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation">
         </iframe>
     `;
+
+    cwWindow.querySelector('#kick-ext-coop-title').textContent = `🎮 ${username}`;
 
     cwGetOverlayParent().appendChild(cwWindow);
 
@@ -208,6 +215,7 @@ const cwOpenStreamWindow = (username) => {
         });
     }
     cwResizeObserver.observe(cwWindow);
+    window.KickExt.escapeStack.pushEscapeHandler(cwCloseStreamWindow);
 };
 
 // ---------------------------------------------------------------------
@@ -222,10 +230,10 @@ const cwReparentToFullscreen = () => {
         return;
     }
     const parent = cwGetOverlayParent();
-    if (cwWindow && cwWindow.parentNode !== parent && !cwWindow.contains(parent)) {
+    if (cwWindow && cwWindow.parentNode !== parent) {
         parent.appendChild(cwWindow);
     }
-    if (cwPrompt && cwPrompt.parentNode !== parent && !cwPrompt.contains(parent)) {
+    if (cwPrompt && cwPrompt.parentNode !== parent) {
         parent.appendChild(cwPrompt);
     }
 };
@@ -242,7 +250,7 @@ document.addEventListener('keydown', function keyHandler(e) {
         return;
     }
     if (e.repeat) return;
-    if (e.altKey && e.key.toLowerCase() === 'n') {
+    if (e.altKey && e.code === 'KeyN') {
         e.preventDefault();
         cwOpenPrompt();
     }

@@ -147,7 +147,7 @@ const qcShowPlaceholderForm = (snippet) => {
 
     const sendBtn = document.createElement('button');
     sendBtn.textContent = 'Send';
-    sendBtn.style.cssText = 'flex:1;background:var(--ke-accent, #4ADE80);color:#0f172a;border:none;border-radius:6px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;';
+    sendBtn.style.cssText = 'flex:1;background:#53FC18;color:#0f172a;border:none;border-radius:6px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;';
     sendBtn.addEventListener('click', () => {
         let result = snippet.text;
         for (const input of inputs) {
@@ -174,7 +174,7 @@ const qcShowPlaceholderForm = (snippet) => {
     // Handle Enter key to submit
     form.addEventListener('keydown', (e) => {
         e.stopPropagation();
-        if (e.key === 'Enter') {
+        if (e.code === 'Enter') {
             e.preventDefault();
             sendBtn.click();
         }
@@ -264,7 +264,7 @@ const qcBuildPanel = () => {
         border: 1px solid #2a2d32;
         border-radius: 10px;
         box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-        z-index: 2147483647;
+        z-index: 2147483000;
         display: flex;
         flex-direction: column;
         font-family: inherit;
@@ -281,12 +281,12 @@ const qcBuildPanel = () => {
         </div>
         <div id="kick-ext-qc-list" style="flex:1;overflow-y:auto;padding:6px;background:rgba(10, 10, 10, var(--kick-ext-panel-alpha, 1));"></div>
         <div style="border-top:1px solid #2a2d32;padding:8px;background:rgba(20, 20, 22, 0.75);">
-            <button id="kick-ext-qc-add-toggle" style="width:100%;background:var(--ke-accent, #4ADE80);color:#0f172a;border:none;border-radius:6px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;">+ Add snippet</button>
+            <button id="kick-ext-qc-add-toggle" style="width:100%;background:#53FC18;color:#0f172a;border:none;border-radius:6px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;">+ Add snippet</button>
             <div id="kick-ext-qc-form" style="display:none;margin-top:8px;flex-direction:column;gap:6px;">
                 <input id="kick-ext-qc-label" placeholder="Name (e.g. Spam warning)" style="background:rgba(14, 14, 16, var(--kick-ext-bg-alpha, 0.95));border:1px solid #2a2d32;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;">
                 <textarea id="kick-ext-qc-text" placeholder="Message / command text..." rows="2" style="background:rgba(14, 14, 16, var(--kick-ext-bg-alpha, 0.95));border:1px solid #2a2d32;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;resize:vertical;"></textarea>
                 <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#a3a3a3;">
-                    <input type="checkbox" id="kick-ext-qc-autosend" checked style="accent-color:var(--ke-accent, #4ADE80);">
+                    <input type="checkbox" id="kick-ext-qc-autosend" checked style="accent-color:#53FC18;">
                     Auto-send on click
                 </label>
                 <button id="kick-ext-qc-save" style="background:#2a2d32;color:#fff;border:none;border-radius:6px;padding:6px;font-size:12px;cursor:pointer;">Save</button>
@@ -393,7 +393,7 @@ const qcShowEditForm = (list, itemEl, snippet) => {
     const autoSendCheck = document.createElement('input');
     autoSendCheck.type = 'checkbox';
     autoSendCheck.checked = !!snippet.autoSend;
-    autoSendCheck.style.cssText = 'accent-color:var(--ke-accent, #4ADE80);';
+    autoSendCheck.style.cssText = 'accent-color:#53FC18;';
     autoSendLabel.appendChild(autoSendCheck);
     autoSendLabel.appendChild(document.createTextNode('Auto-send on click'));
 
@@ -402,7 +402,7 @@ const qcShowEditForm = (list, itemEl, snippet) => {
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save';
-    saveBtn.style.cssText = 'flex:1;background:var(--ke-accent, #4ADE80);color:#0f172a;border:none;border-radius:6px;padding:6px;font-size:12px;font-weight:600;cursor:pointer;';
+    saveBtn.style.cssText = 'flex:1;background:#53FC18;color:#0f172a;border:none;border-radius:6px;padding:6px;font-size:12px;font-weight:600;cursor:pointer;';
     saveBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const newLabel = nameInput.value.trim();
@@ -453,6 +453,7 @@ const qcGetOverlayParent = () => {
 
 const qcClosePanel = () => {
     if (!qcPanel) return;
+    window.KickExt.escapeStack.popEscapeHandler(qcClosePanel);
     qcPanel.remove();
     qcPanel = null;
 };
@@ -474,6 +475,7 @@ const qcOpenPanel = () => {
 
     qcPanel = qcBuildPanel();
     qcGetOverlayParent().appendChild(qcPanel);
+    window.KickExt.escapeStack.pushEscapeHandler(qcClosePanel);
     qcPositionAboveChat(qcPanel);
     qcRenderList();
 
@@ -556,14 +558,14 @@ document.addEventListener('keydown', function keyHandler(e) {
     }
     if (e.repeat) return;
 
-    if (e.altKey && e.key.toLowerCase() === 'v') {
+    if (e.altKey && e.code === 'KeyV') {
         e.preventDefault();
         qcTogglePanel();
         return;
     }
 
-    if (e.key === 'Escape' && qcPanel) {
-        qcClosePanel();
+    if (e.code === 'Escape' && qcPanel) {
+        // Handled by escapeStack
     }
 }, { capture: true });
 

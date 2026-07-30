@@ -169,38 +169,6 @@
   transform: translateX(16px) !important;
 }
 
-/* --- In-Chat Settings Controls Theme Adaptations --- */
-body.kick-ext-theme-silver .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
-  background: #cbd5e1 !important;
-}
-body.kick-ext-theme-silver .kick-ext-sp-slider::-webkit-slider-thumb {
-  background: #cbd5e1 !important;
-  box-shadow: 0 0 6px rgba(203, 213, 225, 0.5) !important;
-}
-
-body.kick-ext-theme-burgundy .kick-ext-sp-btn.active {
-  background: #e11d48 !important;
-  color: #0f172a !important;
-}
-body.kick-ext-theme-burgundy .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
-  background: #e11d48 !important;
-}
-body.kick-ext-theme-burgundy .kick-ext-sp-slider::-webkit-slider-thumb {
-  background: #e11d48 !important;
-  box-shadow: 0 0 6px rgba(225, 29, 72, 0.5) !important;
-}
-
-body.kick-ext-theme-rainbow .kick-ext-sp-btn.active {
-  background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%) !important;
-  color: #0f172a !important;
-}
-body.kick-ext-theme-rainbow .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
-  background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%) !important;
-}
-body.kick-ext-theme-rainbow .kick-ext-sp-slider::-webkit-slider-thumb {
-  background: linear-gradient(135deg, #ff0055 0%, #ff5000 20%, #ffcc00 40%, #00e676 60%, #00b0ff 80%, #d500f9 100%) !important;
-  box-shadow: 0 0 6px rgba(0, 230, 118, 0.5) !important;
-}
 
 /* Reset Button */
 .kick-ext-sp-reset-btn {
@@ -280,21 +248,3 @@ body.kick-ext-theme-rainbow .kick-ext-sp-slider::-webkit-slider-thumb {
   font-weight: 500 !important;
 }
 
-/* Custom Extension Settings Panel (.kick-ext-sp-*) - Silver Theme Overrides */
-body.kick-ext-theme-silver .kick-ext-sp-slider::-webkit-slider-thumb {
-    background: #cbd5e1 !important;
-    box-shadow: 0 0 6px rgba(203, 213, 225, 0.5) !important;
-}
-
-body.kick-ext-theme-silver .kick-ext-sp-btn.active {
-    background: #cbd5e1 !important;
-    color: #0f172a !important;
-}
-
-body.kick-ext-theme-silver .kick-ext-sp-switch input:checked + .kick-ext-sp-knob {
-    background: #cbd5e1 !important;
-}
-
-body.kick-ext-theme-silver .kick-ext-sp-shortcut-key {
-    color: #cbd5e1 !important;
-}

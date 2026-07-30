@@ -3,6 +3,13 @@
   "name": "Kick Extension",
   "version": "1.0",
   "description": "Custom modifications for Kick.com",
+  "author": "Kick Extension Developer",
+  "homepage_url": "https://github.com/kick-extension",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": ["storage", "activeTab"],
   "action": {
     "default_popup": "src/popup/popup.html",
@@ -14,11 +21,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://kick.com/*"],
+      "matches": ["https://*.kick.com/*"],
       "js": [
         "src/utils/dom.js",
         "src/utils/observer.js",
         "src/utils/settings.js",
+        "src/utils/escapeStack.js",
         "src/features/quickClipboard.js",
         "src/features/coopWindow.js",
         "src/features/layout.js",
@@ -26,10 +34,12 @@
         "src/features/draggable.js",
         "src/features/resizable.js",
         "src/features/fullscreen.js",
+        "src/features/blurEngine.js",
         "src/features/chatSettingsInjector.js",
         "src/features/friendsHighlight.js",
         "src/features/mentionSound.js",
-        "src/features/theme.js",
+        "src/features/inPageSettingsModal.js",
+        "src/features/navButtonInjector.js",
         "src/content/content.js"
       ],
       "css": [
@@ -38,18 +48,13 @@
         "src/styles/chat.css",
         "src/styles/settings-panel.css",
         "src/styles/fullscreen.css",
+        "src/styles/inPageModal.css",
         "src/styles/compat.css"
       ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://kick.com/*"],
-      "js": ["src/content/earlyTheme.js"],
-      "css": ["src/styles/earlyTheme.css"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["https://kick.com/*"],
+      "matches": ["https://*.kick.com/*"],
       "js": ["src/content/bridge.js"],
       "run_at": "document_start",
       "world": "MAIN"
@@ -63,13 +68,11 @@
         "src/styles/chat.css",
         "src/styles/settings-panel.css",
         "src/styles/fullscreen.css",
+        "src/styles/inPageModal.css",
         "src/styles/compat.css",
-        "sounds/mention-ding.ogg",
-        "images/kick-logo-silver.png",
-        "images/kick-logo-burgundy.svg",
-        "images/kick-logo-rainbow.svg"
+        "sounds/mention-ding.ogg"
       ],
-      "matches": ["https://kick.com/*"]
+      "matches": ["https://*.kick.com/*"]
     }
   ]
 }

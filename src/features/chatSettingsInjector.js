@@ -87,18 +87,6 @@ const buildExtPanel = () => {
         </label>
       </div>
 
-      <div class="kick-ext-sp-section-title">Appearance</div>
-
-      <div class="kick-ext-sp-item" style="padding-top: 6px; padding-bottom: 6px;">
-        <div class="kick-ext-sp-label" style="margin-bottom: 6px;">Brand Color</div>
-        <div class="kick-ext-sp-btn-group full-width-grid">
-          <button id="kick-ext-sp-theme-green"    class="kick-ext-sp-btn">Green</button>
-          <button id="kick-ext-sp-theme-silver"   class="kick-ext-sp-btn">Silver</button>
-          <button id="kick-ext-sp-theme-burgundy" class="kick-ext-sp-btn">Burgundy</button>
-          <button id="kick-ext-sp-theme-rainbow"  class="kick-ext-sp-btn">Rainbow</button>
-        </div>
-      </div>
-
       <div class="kick-ext-sp-section-title">Layout</div>
 
       <div class="kick-ext-sp-item kick-ext-sp-row">
@@ -236,19 +224,6 @@ const showExtSettings = async (panel) => {
   if (elUserInfo)    elUserInfo.checked    = s.hideUserInfo             ?? false;
   if (elMentionSound) elMentionSound.checked = s.enableMentionSound     ?? false;
 
-  // Theme buttons
-  const themeGreen    = extPanel.querySelector('#kick-ext-sp-theme-green');
-  const themeSilver   = extPanel.querySelector('#kick-ext-sp-theme-silver');
-  const themeBurgundy = extPanel.querySelector('#kick-ext-sp-theme-burgundy');
-  const themeRainbow  = extPanel.querySelector('#kick-ext-sp-theme-rainbow');
-  const activeThemeVal = s.theme ?? 'silver';
-  if (themeGreen && themeSilver && themeBurgundy && themeRainbow) {
-    themeGreen.classList.toggle('active',    activeThemeVal === 'green');
-    themeSilver.classList.toggle('active',   activeThemeVal === 'silver');
-    themeBurgundy.classList.toggle('active', activeThemeVal === 'burgundy');
-    themeRainbow.classList.toggle('active',  activeThemeVal === 'rainbow');
-  }
-
   // Blur level buttons
   const blurOff   = extPanel.querySelector('#kick-ext-sp-blur-off');
   const blurLight = extPanel.querySelector('#kick-ext-sp-blur-light');
@@ -289,35 +264,6 @@ const showExtSettings = async (panel) => {
       btnRight.classList.add('active');
       btnLeft?.classList.remove('active');
       applySetting('chatSide', 'right');
-    });
-
-    themeGreen?.addEventListener('click', () => {
-      themeGreen.classList.add('active');
-      themeSilver?.classList.remove('active');
-      themeBurgundy?.classList.remove('active');
-      themeRainbow?.classList.remove('active');
-      applySetting('theme', 'green');
-    });
-    themeSilver?.addEventListener('click', () => {
-      themeSilver.classList.add('active');
-      themeGreen?.classList.remove('active');
-      themeBurgundy?.classList.remove('active');
-      themeRainbow?.classList.remove('active');
-      applySetting('theme', 'silver');
-    });
-    themeBurgundy?.addEventListener('click', () => {
-      themeBurgundy.classList.add('active');
-      themeGreen?.classList.remove('active');
-      themeSilver?.classList.remove('active');
-      themeRainbow?.classList.remove('active');
-      applySetting('theme', 'burgundy');
-    });
-    themeRainbow?.addEventListener('click', () => {
-      themeRainbow.classList.add('active');
-      themeGreen?.classList.remove('active');
-      themeSilver?.classList.remove('active');
-      themeBurgundy?.classList.remove('active');
-      applySetting('theme', 'rainbow');
     });
 
     elEnableFsChat?.addEventListener('change', (e) => applySetting('enableFullscreenChat', e.target.checked));
@@ -420,57 +366,9 @@ const hideExtSettings = (panel) => {
 // Apply + Persist Setting
 // ============================================================
 
-const applySetting = (key, value) => {
-  // Persist
-  window.KickExt.settings.saveSetting(key, value);
-
-  // Apply immediately (we're already in the content script isolated world)
-  switch (key) {
-    case 'opacity':
-      window.KickExt.transparency?.setChatTransparency(value);
-      break;
-    case 'extraSmallFullscreenFont':
-      if (window.KickExt.fullscreen?.applyFontScale) {
-        window.KickExt.fullscreen.applyFontScale(value);
-      }
-      break;
-    case 'chatSide':
-      if (value === 'left')  window.KickExt.layout?.moveChatLeft();
-      else                   window.KickExt.layout?.moveChatRight();
-      break;
-    case 'hideLeaderboard':
-      document.body.classList.toggle('kick-ext-hide-leaderboard', value);
-      break;
-    case 'hideModerationBar':
-      document.body.classList.toggle('kick-ext-hide-mod-bar', value);
-      break;
-    case 'hideUserInfo':
-      document.body.classList.toggle('kick-ext-hide-user-info', value);
-      break;
-    case 'hideFullscreenChatHeader':
-      window.KickExt.fullscreen?.applyFullscreenChatHeader();
-      break;
-    case 'enableFullscreenChat':
-      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-      if (value) {
-        if (isFS && !window.KickExt.fullscreen.isActive()) {
-          window.KickExt.fullscreen.enterFullscreenChat();
-        }
-      } else {
-        if (window.KickExt.fullscreen.isActive()) {
-          window.KickExt.fullscreen.exitFullscreenChat();
-        }
-      }
-      break;
-    case 'blurLevel':
-      document.documentElement.style.setProperty('--kick-ext-blur', value === '0' ? '0px' : `${value}px`);
-      break;
-    case 'theme':
-      if (window.KickExt.theme) {
-        window.KickExt.theme.setTheme(value);
-      }
-      break;
-  }
+const applySetting = async (key, value) => {
+  await window.KickExt.settings.saveSetting(key, value);
+  window.postMessage({ type: 'KICK_EXT_UPDATE_SETTING', key, value }, window.location.origin);
 };
 
 // ============================================================

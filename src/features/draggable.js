@@ -7,7 +7,7 @@ const makeDraggable = (el, handle) => {
   let startX, startY;
   let parentRect, parentWidth, parentHeight;
 
-  const onMouseDown = (e) => {
+  const onPointerDown = (e) => {
     isDragging = true;
     
     const rect = el.getBoundingClientRect();
@@ -20,13 +20,13 @@ const makeDraggable = (el, handle) => {
     parentHeight = el.parentElement.clientHeight;
     
     el.classList.add('is-dragging');
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
     
     e.preventDefault(); // Prevent text selection
   };
 
-  const onMouseMove = (e) => {
+  const onPointerMove = (e) => {
     if (!isDragging) return;
 
     // Calculate position relative to parent (using bounds cached at drag start)
@@ -45,14 +45,14 @@ const makeDraggable = (el, handle) => {
     el.style.bottom = 'auto';
   };
 
-  const onMouseUp = async () => {
+  const onPointerUp = async () => {
     if (!isDragging) return;
     
     isDragging = false;
     el.classList.remove('is-dragging');
     
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
 
     // Save position to settings
     if (window.KickExt && window.KickExt.settings) {
@@ -61,7 +61,7 @@ const makeDraggable = (el, handle) => {
     }
   };
 
-  handle.addEventListener('mousedown', onMouseDown);
+  handle.addEventListener('pointerdown', onPointerDown);
   handle.style.cursor = 'grab';
 };
 

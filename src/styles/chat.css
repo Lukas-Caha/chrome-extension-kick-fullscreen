@@ -30,11 +30,13 @@
 #kick-ext-chat-overlay div:has(> .animate-marquee) {
     background-color: rgba(10, 10, 10, var(--kick-ext-panel-alpha)) !important;
     background-image: none !important;
-    backdrop-filter: blur(6px) !important;
-    -webkit-backdrop-filter: blur(6px) !important;
-    will-change: backdrop-filter;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     z-index: 10 !important;
+}
+
+#kick-ext-chat-overlay.kick-ext-blur-active div:has(> .animate-marquee) {
+    backdrop-filter: blur(var(--kick-ext-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--kick-ext-blur)) !important;
 }
 
 /* Hide Top Gifted / Leaderboard Header */

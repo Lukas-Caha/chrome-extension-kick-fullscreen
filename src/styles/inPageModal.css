@@ -1,0 +1,525 @@
+/* Kick Extension - In-Page Settings Modal Styles */
+
+#kick-ext-inpage-settings-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999990;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+#kick-ext-inpage-settings-modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#kick-ext-inpage-settings-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 720px;
+  height: 520px;
+  min-width: 520px;
+  min-height: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: rgba(17, 20, 25, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  z-index: 999991;
+  display: flex;
+  flex-direction: column;
+  color: #efefef;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#kick-ext-inpage-settings-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Header */
+.kick-ext-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: rgba(24, 27, 33, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  user-select: none;
+  shrink: 0;
+}
+
+.kick-ext-modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.kick-ext-modal-header-icon {
+  width: 16px;
+  height: 16px;
+  background: var(--ke-accent, #53fc18);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(83, 252, 24, 0.4);
+}
+
+.kick-ext-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #94969b;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.kick-ext-modal-close-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Body Layout (Discord/VSCode Sidebar Style) */
+.kick-ext-modal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar Navigation */
+.kick-ext-modal-sidebar {
+  width: 200px;
+  background: rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  shrink: 0;
+  overflow-y: auto;
+}
+
+.kick-ext-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94969b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.kick-ext-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.kick-ext-sidebar-item.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-left: 3px solid var(--ke-accent, #53fc18);
+}
+
+.kick-ext-sidebar-icon {
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+}
+
+/* Content Area */
+.kick-ext-modal-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: #111419;
+}
+
+.kick-ext-tab-pane {
+  display: none;
+  animation: kickExtFadeIn 0.15s ease-in-out;
+}
+
+.kick-ext-tab-pane.active {
+  display: block;
+}
+
+@keyframes kickExtFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.kick-ext-pane-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #ffffff;
+}
+
+.kick-ext-pane-desc {
+  font-size: 12px;
+  color: #94969b;
+  margin-bottom: 20px;
+}
+
+/* Settings Items Inside Content Pane */
+.kick-ext-modal-setting-item {
+  background: #1a1d23;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.15s;
+}
+
+.kick-ext-modal-setting-item:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.kick-ext-modal-setting-item.block-layout {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.kick-ext-modal-setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kick-ext-modal-setting-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.kick-ext-modal-setting-sub {
+  font-size: 11px;
+  color: #94969b;
+}
+
+/* Switch */
+.kick-ext-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+
+.kick-ext-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.kick-ext-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #2b3038;
+  transition: .3s;
+  border-radius: 22px;
+}
+
+.kick-ext-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.kick-ext-switch input:checked + .kick-ext-slider {
+  background-color: var(--ke-accent, #53fc18);
+}
+
+.kick-ext-switch input:checked + .kick-ext-slider:before {
+  transform: translateX(20px);
+}
+
+/* Range Input */
+.kick-ext-range-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.kick-ext-range-container input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+.kick-ext-range-container input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  background: #2b3038;
+  border-radius: 3px;
+}
+
+.kick-ext-range-container input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: var(--ke-accent, #53fc18);
+  margin-top: -6px;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+}
+
+.kick-ext-range-value {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ke-accent, #53fc18);
+  min-width: 42px;
+  text-align: right;
+}
+
+/* Button Group (Theme / Blur / Position) */
+.kick-ext-btn-group {
+  display: flex;
+  background: #24272c;
+  padding: 3px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.kick-ext-btn-group-btn {
+  background: transparent;
+  border: none;
+  color: #94969b;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: 1;
+  text-align: center;
+}
+
+.kick-ext-btn-group-btn:hover {
+  color: #ffffff;
+}
+
+.kick-ext-btn-group-btn.active {
+  background: var(--ke-accent, #53fc18);
+  color: #000000;
+}
+
+/* Theme Color Previews */
+.kick-ext-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.kick-ext-theme-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #24272c;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.kick-ext-theme-card:hover {
+  background: #2b3038;
+}
+
+.kick-ext-theme-card.active {
+  border-color: var(--ke-accent, #53fc18);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.kick-ext-theme-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.kick-ext-theme-dot.green { background: #53fc18; }
+.kick-ext-theme-dot.silver { background: #cbd5e1; }
+.kick-ext-theme-dot.burgundy { background: #800020; }
+.kick-ext-theme-dot.rainbow { background: linear-gradient(135deg, #ff0055, #ffcc00, #00e676, #00b0ff); }
+
+/* Friend Pills Badges */
+.kick-ext-friends-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.kick-ext-friend-input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.kick-ext-friend-input {
+  flex: 1;
+  background: #24272c;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #ffffff;
+  font-size: 13px;
+  outline: none;
+}
+
+.kick-ext-friend-input:focus {
+  border-color: var(--ke-accent, #53fc18);
+}
+
+.kick-ext-add-friend-btn {
+  background: var(--ke-accent, #53fc18);
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.kick-ext-add-friend-btn:hover {
+  opacity: 0.9;
+}
+
+.kick-ext-friends-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px;
+  background: #14171d;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kick-ext-friend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(83, 252, 24, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(83, 252, 24, 0.3);
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kick-ext-friend-pill-delete {
+  cursor: pointer;
+  color: #ff6b6b;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 50%;
+  transition: color 0.15s;
+}
+
+.kick-ext-friend-pill-delete:hover {
+  color: #ff3333;
+}
+
+/* Shortcuts Table */
+.kick-ext-shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.kick-ext-shortcuts-table tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.kick-ext-shortcuts-table td {
+  padding: 10px 0;
+  font-size: 12px;
+}
+
+.kick-ext-shortcut-badge {
+  background: #24272c;
+  color: var(--ke-accent, #53fc18);
+  font-family: monospace;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.kick-ext-modal-resizer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  z-index: 10;
+}
+
+.kick-ext-modal-resizer::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Theme Accents for In-Page Modal */
+body.kick-ext-theme-silver #kick-ext-inpage-settings-modal {
+  --ke-accent: #cbd5e1;
+}
+body.kick-ext-theme-burgundy #kick-ext-inpage-settings-modal {
+  --ke-accent: #800020;
+}
+body.kick-ext-theme-rainbow #kick-ext-inpage-settings-modal {
+  --ke-accent: #00e676;
+}

@@ -16,11 +16,18 @@
             <span class="version">v1.0</span>
         </header>
 
+        <section class="open-inpage-section">
+            <button id="btn-open-inpage-modal" class="primary-modal-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Open full settings on Kick</span>
+            </button>
+        </section>
+
         <section>
-            <div class="section-title">Chat Overlay</div>
-            
+            <div class="section-title">Quick options</div>
+
             <div class="setting-item flex-row">
-                <div class="setting-label">Enable Fullscreen Chat</div>
+                <div class="setting-label">Fullscreen Chat</div>
                 <label class="switch">
                     <input type="checkbox" id="toggle-enable-fs-chat" checked>
                     <span class="slider round"></span>
@@ -29,140 +36,15 @@
 
             <div class="setting-item">
                 <div class="setting-label">
-                    <span>Opacity</span>
+                    <span>Transparency</span>
                     <span id="opacity-value">100%</span>
                 </div>
                 <input type="range" id="opacity-slider" min="0" max="100" value="100">
             </div>
-
-            <div class="setting-item flex-row">
-                <div class="setting-label">Blur Effect</div>
-                <div class="toggle-group">
-                    <button id="btn-blur-off" class="toggle-btn">Off</button>
-                    <button id="btn-blur-light" class="toggle-btn">Light</button>
-                    <button id="btn-blur-full" class="toggle-btn">Full</button>
-                </div>
-            </div>
-
-            <div class="setting-item flex-row">
-                <div class="setting-label">Extra Small Font (Fullscreen)</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-extra-small-font">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">Notifications</div>
-            <div class="setting-item flex-row">
-                <div class="setting-label">Sound on Mention/Reply</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-mention-sound">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">Appearance</div>
-            <div class="setting-item">
-                <div class="setting-label">Brand Color</div>
-                <div class="toggle-group full-width-grid">
-                    <button id="btn-theme-green" class="toggle-btn">Green</button>
-                    <button id="btn-theme-silver" class="toggle-btn">Silver</button>
-                    <button id="btn-theme-burgundy" class="toggle-btn">Burgundy</button>
-                    <button id="btn-theme-rainbow" class="toggle-btn">Rainbow</button>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">Layout</div>
-            
-            <div class="setting-item flex-row">
-                <div class="setting-label">Chat Position</div>
-                <div class="toggle-group">
-                    <button id="btn-left" class="toggle-btn">Left</button>
-                    <button id="btn-right" class="toggle-btn active">Right</button>
-                </div>
-            </div>
-
-            <div class="setting-item flex-row">
-                <div class="setting-label">Hide Leaderboard</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-leaderboard" checked>
-                    <span class="slider round"></span>
-                </label>
-            </div>
-
-            <div class="setting-item flex-row">
-                <div class="setting-label">Hide Fullscreen Chat Header</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-fs-header">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-
-            <div class="setting-item flex-row">
-                <div class="setting-label">Hide Moderation Bar</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-mod-bar">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-
-            <div class="setting-item flex-row">
-                <div class="setting-label">Hide Kicks</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-user-info">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">Manage Friends</div>
-            <div class="setting-item">
-                <div class="friends-input-row" style="display:flex; gap:8px; margin-bottom:8px;">
-                    <input type="text" id="friend-input" placeholder="Username" style="flex:1; background:#24272c; border:1px solid var(--border); border-radius:6px; padding:6px 10px; color:var(--text-main); font-size:12px; outline:none; width: 100%;">
-                </div>
-                <div class="friends-btn-row" style="display:flex; gap:8px; margin-bottom:8px;">
-                    <button id="btn-add-friend" class="toggle-btn active" style="flex:1; text-align:center;">Add</button>
-                    <button id="btn-remove-friend" class="toggle-btn" style="flex:1; text-align:center; background:rgba(255, 80, 80, 0.18); color:#ff7070;">Remove</button>
-                </div>
-                <div id="friend-list" style="font-size:11px; color:var(--text-dim); max-height:80px; overflow-y:auto; word-break:break-all; padding:6px 8px; background:#24272c; border-radius:6px;"></div>
-            </div>
         </section>
 
         <section class="actions">
-            <button id="btn-reset" class="secondary-btn">Reset Layout</button>
-        </section>
-
-        <section class="shortcuts-section">
-            <div class="section-title">Keyboard Shortcuts</div>
-            <div class="shortcuts-panel">
-                <div class="shortcut-row">
-                    <span class="shortcut-key">Alt+F</span>
-                    <span class="shortcut-desc">Toggle Fullscreen Chat</span>
-                </div>
-                <div class="shortcut-row">
-                    <span class="shortcut-key">Alt+G</span>
-                    <span class="shortcut-desc">Toggle Ghost Mode</span>
-                </div>
-                <div class="shortcut-row">
-                    <span class="shortcut-key">Alt++ / Alt+-</span>
-                    <span class="shortcut-desc">Adjust Opacity (10%)</span>
-                </div>
-                <div class="shortcut-row">
-                    <span class="shortcut-key">Alt+V</span>
-                    <span class="shortcut-desc">Toggle Quick Clipboard</span>
-                </div>
-                <div class="shortcut-row">
-                    <span class="shortcut-key">Alt+N</span>
-                    <span class="shortcut-desc">Coop Stream Window</span>
-                </div>
-            </div>
+            <button id="btn-reset" class="secondary-btn">Reset chat position</button>
         </section>
     </div>
     <script src="popup.js"></script>
