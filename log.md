@@ -1,7 +1,22 @@
 # Kick Extension Development Log
-**Date:** 2026-07-27
-**Status:** Beta - Themes Subsystem Removal & Legacy Theme Documentation
-**Last Backup:** 2026-07-29 - BACKUP46(animation_and_blur_fixes)
+**Date:** 2026-07-30
+**Status:** Beta - Code Review Fixes V2
+**Last Backup:** 2026-07-30 - BACKUP48(code_review_fixes_V2)
+
+### 65. Code Review Fixes V2 (12 Verified Issues)
+- **friendsHighlight.js:** Added safe timer (`fhFallbackPollTimer`) and context invalidation check (`chrome.runtime.id`) to background polling, pausing on `document.hidden`.
+- **fullscreen.js:** Added `{ capture: true }` to global keydown listeners to match initialization.
+- **fullscreen.js:** Improved close button detection on profile banners using `aria-label` and `svg` queries instead of just `.absolute`.
+- **fullscreen.js:** Awaited `applyFontScale()` to prevent font size flashing during fullscreen transition.
+- **popup.js:** Replaced spoofable `includes('kick.com')` URL checking with secure `isKickUrl` helper.
+- **settings.js:** Added type validation (`SETTING_VALIDATORS`) and `sanitizeSettings()` to `getAllSettings` and `getSetting` to prevent broken state (e.g. `opacity` or `blurLevel` corruption).
+- **content.js:** Added `Number.isFinite` guard for `blurLevel` before passing it to the blur engine to prevent `NaNpx` CSS injection.
+- **inPageSettingsModal.js:** Modal now dynamically reparents to fullscreen overlay using `getModalOverlayParent()` and reacts to `fullscreenchange` events.
+- **z-index Safety:** Reduced extreme `z-index` from INT_MAX (`2147483647`) to `2147483000` in `quickClipboard.js` and `coopWindow.js` to prevent global UI conflicts.
+- **coopWindow.js:** Added proper `sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"` attribute to the Kick player iframe.
+- **Localization:** Translated remaining Czech comments and UI strings (in `popup.html`, `popup.js`, `resizable.js`, `fullscreen.js`, `mentionSound.js`, `friendsHighlight.js`, `chatSettingsInjector.js`) to English.
+- **escapeStack.js:** Implemented a central priority stack so hitting Escape closes only the most recently opened panel (Quick Clipboard, Coop Window, or Profile Banner) instead of all simultaneously.
+- **Backup:** BACKUP48(code_review_fixes_V2) created.
 
 ### 64. Fast Fade Panel Hide Animation & Performance Optimization (BACKUP46)
 - **Bug Fix (Panel Closing Artifacts):** Addressed a visual artifact ("dark line") left behind when closing chat panels (Settings, Gift Shop, Points) in the fullscreen overlay. The artifact was caused by the lingering padding and `backdrop-filter` of the panel wrapper during its shrink animation.
